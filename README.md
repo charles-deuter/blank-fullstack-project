@@ -1,38 +1,38 @@
-### blank-express-project
+## blank-express-project
 This is a blank express project, it has minimal functionality, but includes some minimal endpoints and tests for functionality
 
-#### Install
+### Install
 
 ```console
 npm install
 ```
 
-#### Start server
+### Start server
 
 ```console
 npm start
 ```
 
-#### Running tests
+## Running tests
 
-# Run all tests
+### Run all tests
 ```console
 npm test
 ```
 
-# Run one test
+### Run one test
 ```console
 npm test -- path/to/test.spec.ts
 ```
 
-#### DB
+## DB
 
-# generate migrations
+### generate migrations
 ```console
 npm run db:generate
 ```
 
-# run migrations against db
+### run migrations against db
 Set ENV variables in your .env file
 ```
 DATABASE_HOST=localhost
@@ -46,14 +46,14 @@ run command
 npm run db:migrate
 ```
 
-#### Linting
+## Linting
 
-# check formatting without writing
+### check formatting without writing
 ```console
 npm run format:check
 ```
 
-# fix formatting errors
+### fix formatting errors
 ```console
 npm run format
 ```
