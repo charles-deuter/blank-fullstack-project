@@ -2,8 +2,11 @@ import express, { ErrorRequestHandler } from 'express';
 import apiRouter from './api/router';
 import heartbeat from './database/dal/heartbeat';
 const app = express();
+import morgan from 'morgan';
+
 
 app.use(express.json());
+app.use(morgan('dev'))
 
 // Health Check Endpoint
 app.get('/health-check', async (req, res) => {
