@@ -1,0 +1,11 @@
+# Ignore dependencies and build outputs
+node_modules
+dist
+build
+coverage
+
+# Ignore system files
+.DS_Store
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
