@@ -32,7 +32,7 @@ class PostgresEnvironment extends NodeEnvironment {
     const db = drizzle(client);
     try {
       await migrate(db, {
-        migrationsFolder: './drizzle',
+        migrationsFolder: './migrations',
       });
       // await pushSchema(schema, db);
     } catch (error) {
