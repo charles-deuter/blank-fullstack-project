@@ -17,19 +17,27 @@ cd backend && npm install && cp .env.example .env
 cd ../frontend && npm install && cp .env.example .env.local
 ```
 
-Set a `DATABASE_PASSWORD` (and adjust the other `DATABASE_*` values) in `backend/.env`
-if you want the DB-backed endpoints to work. The frontend only needs `BACKEND_URL`,
-which already points at `http://localhost:4000` in `.env.example`.
+The `backend/.env.example` `DATABASE_*` values match the local Postgres container
+that `./dev.sh` starts. The frontend only needs `BACKEND_URL`, which already points
+at `http://localhost:4000` in `.env.example`.
 
 ## Run
 
-Both at once:
+Both apps plus a local Postgres, in one terminal:
 
 ```console
 ./dev.sh
 ```
 
-Or in separate terminals:
+This starts a `postgres:16-alpine` container (`local-postgres`, port 5432), waits
+for it to be ready, then runs the backend and frontend. Ctrl-C stops all three and
+removes the container (`docker run --rm`). Requires a running Docker daemon.
+
+Or run the pieces yourself in separate terminals:
+
+```console
+docker run --rm --name local-postgres -e POSTGRES_USER=local -e POSTGRES_PASSWORD=arfarf -p 5432:5432 postgres:16-alpine
+```
 
 ```console
 cd backend && npm start
@@ -41,7 +49,8 @@ cd frontend && npm run dev
 
 Then open http://localhost:3000 — the page renders `hello-world` and the formatted
 response from the backend's `/health-check` endpoint (proving the two apps talk).
-`connection_status: INACTIVE` is expected when no PostgreSQL is running.
+With `./dev.sh` running you should see `connection_status: ACTIVE`; without a
+database it reads `INACTIVE`.
 
 ## Per-app docs
 
