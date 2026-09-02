@@ -15,10 +15,11 @@ A **scaffold**, not a product. Two independent apps in one repo, no root `packag
 `./dev.sh` starts a throwaway `postgres:16-alpine` container, applies migrations, then
 runs both apps. Node is pinned per app via `.nvmrc` (`v26.8.1`); run `nvm use` in each.
 
-There is exactly **one worked vertical slice** — the `foo` entity — wired from a
-Postgres table through Express to a React table. Every new feature is built by copying
-it. The value of this document is the shape of that slice and where it is easy to get
-it wrong.
+Two slices exist. The `foo` entity is the **reference slice**, wired from a Postgres
+table through Express to a React table; new features are built by copying it. The
+**wallets and transfers** slice is backend-only — no server action, no component — and
+is where the money rules live. The value of this document is the shape of those slices
+and where it is easy to get them wrong.
 
 ## Glossary
 
@@ -34,6 +35,21 @@ Use these terms verbatim; don't drift to synonyms.
 - **Result union** — the `{ ok: true, ... } | { ok: false, message: string }` shape every
   server action returns instead of throwing.
 - **Heartbeat** — the `SELECT 1` liveness probe behind `/health-check`.
+- **Executor** — a `db` handle or an open `tx` handle. DAL functions take one so they
+  can run inside a caller's transaction.
+
+Payments language:
+
+- **Wallet** — a stored balance and a display name. A wallet *is* the account holder;
+  there is no separate person behind it. _Avoid_: account, user.
+- **Transfer** — moving money from one wallet to another. It happens whole or not at
+  all. _Avoid_: payment, send.
+- **Ledger** — the `transactions` table. A row exists only where money actually moved;
+  there is no status column and nothing to filter out.
+- **Transaction error** — a recorded rejected transfer attempt, in `transaction_errors`.
+  Never served over HTTP. _Avoid_: failed transaction, which implies a ledger row.
+- **Cents** — money is integer cents everywhere (`balance_cents`, `amount_cents`).
+  Dollars exist only in display. _Avoid_: an unqualified `amount` or `balance`.
 
 ## Layer map
 
@@ -105,7 +121,19 @@ cd backend && nvm use && npm install && npm test
   anywhere** — a client-side `fetch` to port 4000 would silently require it.
 - **Server actions return result unions, they don't throw.** Components render the failure
   branch; nothing uses error boundaries. See `ListFoosResult` / `CreateFooResult`.
-- **The DAL is the only module that imports `db`.** Routes import the DAL.
+- **The DAL owns `db`, with one documented exception.** Routes normally import only the
+  DAL. `api/transaction.ts` imports `db` directly, because a transfer holds a row lock
+  across read, check and write, so the transaction boundary has to sit with the logic.
+  DAL functions take an optional **Executor** and default to `db`. See `docs/adr/0001`.
+- **Lock wallets in ascending id order.** `dal/wallet.lockPair` sorts by id before
+  `FOR UPDATE`. The sort is not cosmetic: without it, simultaneous A→B and B→A transfers
+  deadlock each other.
+- **`transaction_errors` carries no foreign keys, on purpose.** It has to record wallet
+  ids that never existed. "Fixing" the missing constraint breaks the failure taxonomy.
+  See `docs/adr/0002`.
+- **The seed migration is a test fixture.** `test-environment.ts` migrates a fresh
+  container per spec file, so the ten seeded wallets exist in *every* test. Changing a
+  seeded balance breaks specs elsewhere that assert on it.
 - **Deterministic ordering.** `findALL` sorts `created_at DESC, id DESC`. The `id` tiebreak
   is deliberate — rows sharing a timestamp would otherwise shuffle between queries, and the
   tests assert on the order.
@@ -113,20 +141,39 @@ cd backend && nvm use && npm install && npm test
   client render identical text. Defaulting either causes a hydration mismatch. Any new date
   rendering must do the same.
 - **Every export from a `'use server'` module is a public endpoint.** Don't export helpers
-  from `frontend/src/server-actions/`.
+  from `frontend/src/server-actions/`. `server-actions/wallet.ts` keeps its three reads
+  unexported behind one `loadPaymentsSnapshot` for exactly this reason — which also makes
+  a refresh one client roundtrip instead of three, since the client dispatches server
+  functions sequentially.
+- **`npm run typecheck` in `frontend/` needs a prior `npm run build`.** `layout.tsx` uses
+  `LayoutProps<'/'>`, a type Next generates into `.next/types`. On a fresh worktree
+  `tsc --noEmit` fails with `Cannot find name 'LayoutProps'` until something has built.
+- **Read `frontend/node_modules/next/dist/docs/` before writing frontend code.** Next 16.3
+  ships version-matched docs and `frontend/AGENTS.md` requires them; training-data Next is
+  wrong often enough to matter. Cache Components is **off**, so `use cache` and its
+  prerender rules do not apply here.
+- **Money crosses the wire as integer cents.** `frontend/src/lib/money.ts` is the only
+  place dollars exist: `parseDollarsToCents` does integer-only arithmetic, because
+  `Number('12.34') * 100` is `1233.9999…`.
 
 ## Seams not yet established
 
 The first feature that needs one of these decides its shape:
 
-- **No service layer.** `CLAUDE.md` refers to unit-testing "complicated business logic in
-  services", but `backend/src/services/` does not exist. Logic currently sits in the route.
-- **No auth, sessions, or users.** Middleware is `express.json()` and `morgan` only.
+- **Still no service layer.** `CLAUDE.md` refers to unit-testing "complicated business
+  logic in services", but `backend/src/services/` does not exist. The transfer rules sit
+  in `api/transaction.ts` by decision rather than by accident; `docs/adr/0001` records why,
+  and names this the first thing to revisit if a second feature needs the same logic.
+- **No auth, sessions, or users.** Middleware is `express.json()` and `morgan` only. A
+  wallet is its own account holder, so any caller can send from any wallet. This is also
+  why `transaction_errors` is written but never served.
+- **No idempotency on transfers.** A retried `POST /api/transactions` moves money twice.
+  Retrofitting means a nullable `idempotency_key` column plus a partial unique index.
 - **No validation library.** `backend/src/api/foo.ts` hand-rolls its checks.
 - **No CI.** No `.github/`. `npm test`, `npm run typecheck`, and `npm run format:check`
   are manual, per app.
-- **No `.artifacts/` and no `docs/adr/`**, though `docs/agents/` describes both. Created on
-  first use.
+- **No `.artifacts/` yet**, though `docs/agents/` describes it. Created on first use.
+  `docs/adr/` now exists and holds two decisions.
 
 ## Known drift
 
@@ -136,9 +183,9 @@ Recorded so sessions stop rediscovering it. Not currently scheduled for a fix.
   the live path — don't build on `pool.ts`.
 - `CreateFooBody.name` is typed `any` in `backend/src/api/foo.ts`, contradicting the
   no-`any` rule in `CLAUDE.md`.
-- Component filenames are PascalCase (`FooTable.tsx`, `HelloWorldDashboard.tsx`) while
-  `CLAUDE.md` mandates kebab-case. Backend files do follow kebab-case. **Unresolved** —
-  ask before adding a component either way.
+- Component filenames are PascalCase (`FooTable.tsx`, `PaymentsDashboard.tsx`); every
+  other file in both apps is kebab-case. **Resolved** — `CLAUDE.md` no longer mandates
+  kebab-case, so match the directory you are writing in.
 - The `BACKEND_URL` fallback `?? 'http://localhost:4000'` is duplicated across both files
   in `frontend/src/server-actions/`.
 - The error handler in `backend/src/app.ts` returns `err.stack` in the 500 response body.

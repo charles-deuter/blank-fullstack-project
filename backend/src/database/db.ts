@@ -18,3 +18,8 @@ pool.on('error', (err) => {
 });
 
 export const db = drizzle(pool, { schema });
+
+// A DAL function may run either on the pooled connection or inside an open
+// transaction. Routes that own a transaction boundary pass the `tx` handle through;
+// everything else gets `db` by default. See docs/adr/0001.
+export type Executor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
