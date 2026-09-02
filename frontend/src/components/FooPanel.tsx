@@ -1,5 +1,5 @@
-import { listFoos } from "@/server-actions/foo";
-import FooTable from "./FooTable";
+import { listFoos } from '@/server-actions/foo';
+import FooTable from './FooTable';
 
 export default async function FooPanel() {
   const result = await listFoos();

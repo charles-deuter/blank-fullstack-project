@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { useState, useTransition } from "react";
-import { createFoo, listFoos, type Foo } from "@/server-actions/foo";
+import { useState, useTransition } from 'react';
+import { createFoo, listFoos, type Foo } from '@/server-actions/foo';
 
-const FOO_NAME = "hello-world";
+const FOO_NAME = 'hello-world';
 
 // Locale and timezone are pinned so the server and the client format identically;
 // letting either default would render different text and trip a hydration mismatch.
-const createdAtFormat = new Intl.DateTimeFormat("en-US", {
-  timeZone: "UTC",
-  year: "numeric",
-  month: "short",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
+const createdAtFormat = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'UTC',
+  year: 'numeric',
+  month: 'short',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
   hour12: false,
 });
 
@@ -64,16 +64,14 @@ export default function FooTable({ initialFoos, initialError }: FooTableProps) {
           disabled={isPending}
           className="self-start rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          {isPending ? "Creating…" : "Create foo"}
+          {isPending ? 'Creating…' : 'Create foo'}
         </button>
 
         <div role="status" aria-live="polite" className="min-h-9">
           {status && (
             <p
               className={`rounded px-3 py-2 text-sm ${
-                status.ok
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
+                status.ok ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
               }`}
             >
               {status.message}
