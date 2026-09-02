@@ -1,12 +1,2 @@
-# dependencies
-node_modules
-
-# environment
-.env
-
 # IDE
 .idea/
-
-# AI
-.agents/
-.claude/
