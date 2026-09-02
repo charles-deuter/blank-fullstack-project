@@ -47,10 +47,11 @@ cd backend && npm start
 cd frontend && npm run dev
 ```
 
-Then open http://localhost:3000 — the page renders `hello-world` and the formatted
-response from the backend's `/health-check` endpoint (proving the two apps talk).
-With `./dev.sh` running you should see `connection_status: ACTIVE`; without a
-database it reads `INACTIVE`.
+Then open http://localhost:3000 — the page renders `hello-world` followed by a
+status dot. The dot is the bitwise AND of the backend's `server_status` and
+`connection_status` from `/health-check`: green only when both are `ACTIVE`, red
+otherwise. Hover it to see the full request and response. With `./dev.sh` running
+the dot is green; without a database it is red (`connection_status: INACTIVE`).
 
 ## Per-app docs
 
