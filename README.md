@@ -8,7 +8,8 @@ Two independent apps in one repo:
 | `frontend/` | Next.js (App Router) + Tailwind         | `3000`   |
 
 Each folder has its own `package.json` and lockfile — there is no root package.
-Node version is pinned in `backend/.nvmrc` (`v24.16.0`); use the same for the frontend.
+Node version is pinned per app in `backend/.nvmrc` and `frontend/.nvmrc` (`v26.8.1`);
+run `nvm use` in each folder. Both `package.json`s declare `engines.node >= 26.0.0`.
 
 ## Setup
 
