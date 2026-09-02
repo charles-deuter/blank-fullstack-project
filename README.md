@@ -30,8 +30,12 @@ Both apps plus a local Postgres, in one terminal:
 ```
 
 This starts a `postgres:16-alpine` container (`local-postgres`, port 5432), waits
-for it to be ready, then runs the backend and frontend. Ctrl-C stops all three and
-removes the container (`docker run --rm`). Requires a running Docker daemon.
+for it to be ready, applies `backend/migrations/` with `npm run db:migrate`, then
+runs the backend and frontend. Ctrl-C stops all three and removes the container
+(`docker run --rm`). Requires a running Docker daemon.
+
+The migrate step is not optional: the container starts empty every run, so without
+it the `foo` table does not exist and `/api/foo` returns a 500.
 
 Or run the pieces yourself in separate terminals:
 
@@ -44,6 +48,10 @@ cd backend && npm start
 ```
 
 ```console
+cd backend && npm run db:migrate
+```
+
+```console
 cd frontend && npm run dev
 ```
 
@@ -52,6 +60,12 @@ status dot. The dot is the bitwise AND of the backend's `server_status` and
 `connection_status` from `/health-check`: green only when both are `ACTIVE`, red
 otherwise. Hover it to see the full request and response. With `./dev.sh` running
 the dot is green; without a database it is red (`connection_status: INACTIVE`).
+
+Beneath that is the foo panel: a **Create foo** button that `POST`s to
+`/api/foo`, a green/red status line reporting the result, and a table of every
+record newest-first. The browser never calls Express directly — it goes through
+the Next server actions in `frontend/src/server-actions/`, so there is no CORS
+setup and `BACKEND_URL` stays server-side.
 
 ## Per-app docs
 

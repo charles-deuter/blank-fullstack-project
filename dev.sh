@@ -22,6 +22,9 @@ cleanup() {
 trap cleanup INT TERM EXIT
 
 echo "[postgres] starting $PG_CONTAINER"
+# A leftover container from a killed run would win the name, and the readiness
+# probe below would happily pass against it — migrating a database we didn't start.
+docker rm -f "$PG_CONTAINER" >/dev/null 2>&1 || true
 docker run --rm --name "$PG_CONTAINER" \
   -e POSTGRES_USER=local \
   -e POSTGRES_PASSWORD=arfarf \
@@ -41,6 +44,11 @@ docker exec "$PG_CONTAINER" pg_isready -U local >/dev/null 2>&1 || {
   exit 1
 }
 echo "[postgres] ready"
+
+# The container starts empty every run, so the schema has to be applied before
+# anything queries it.
+echo "[postgres] applying migrations"
+( cd backend && npm run db:migrate ) 2>&1 | sed 's/^/[migrate] /'
 
 ( cd backend && exec npm start 2>&1 | sed 's/^/[backend] /' ) &
 pids+=("$!")

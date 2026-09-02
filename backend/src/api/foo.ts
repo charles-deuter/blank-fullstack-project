@@ -13,6 +13,25 @@ const fooController: RequestHandler = async (req, res, next) => {
   }
 };
 
+const createFooController: RequestHandler = async (req, res, next) => {
+  try {
+    const { name } = req.body ?? {};
+
+    if (typeof name !== 'string' || name.trim() === '') {
+      return res.status(400).json({
+        message: 'name is required and must be a non-empty string',
+      });
+    }
+
+    const created = await foo.create(name.trim());
+
+    res.status(201).json(created);
+  } catch (err) {
+    next(err);
+  }
+};
+
 fooRouter.get('/', fooController);
+fooRouter.post('/', createFooController);
 
 export default fooRouter;
