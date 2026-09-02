@@ -5,3 +5,6 @@ export const foo = pgTable('foo', {
   name: text('name').notNull(),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+
+export type FooInsertType = typeof foo.$inferInsert

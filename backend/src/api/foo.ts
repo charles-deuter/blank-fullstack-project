@@ -1,4 +1,4 @@
-import express, { RequestHandler } from 'express';
+import express, { RequestHandler, Request } from 'express';
 import * as foo from '../database/dal/foo';
 
 const fooRouter = express.Router();
@@ -13,7 +13,11 @@ const fooController: RequestHandler = async (req, res, next) => {
   }
 };
 
-const createFooController: RequestHandler = async (req, res, next) => {
+interface CreateFooBody {
+  name: any,
+}
+
+const createFooController: RequestHandler = async (req: Request<{}, {}, CreateFooBody>, res, next) => {
   try {
     const { name } = req.body ?? {};
 

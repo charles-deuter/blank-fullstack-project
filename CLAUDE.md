@@ -1,3 +1,16 @@
+# Project Overview: Blank Fullstack Web App Project
+
+## Tech Stack
+- **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS
+- **Backend:** Node.js, Express, Drizzle Orm, Typescript
+- **Database:** PostgreSQL (run locally on docker)
+- **Testing:** Jest
+
+## Code Style & Guidelines
+- Always use TypeScript types or interfaces for component props; do not use `any`.
+- Name components using PascalCase and files using kebab-case (e.g., `user-profile.tsx`).
+- When testing backend components try to use 
+
 ## Agent skills
 
 ### Issue tracker

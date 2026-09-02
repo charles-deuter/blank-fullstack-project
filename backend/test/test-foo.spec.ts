@@ -1,7 +1,7 @@
 import request from 'supertest';
 import app from '../src/app';
 import { db } from '../src/database/db';
-import { foo } from '../src/database/schema';
+import {foo, FooInsertType} from '../src/database/schema';
 
 // Deliberately spaced so ordering assertions can't tie, and deliberately
 // inserted out of order so passing proves a sort rather than insertion order.
@@ -9,7 +9,7 @@ const OLDEST = new Date('2026-01-01T00:00:00.000Z');
 const MIDDLE = new Date('2026-02-01T00:00:00.000Z');
 const NEWEST = new Date('2026-03-01T00:00:00.000Z');
 
-const fooFixture = [
+const fooFixture: FooInsertType[] = [
   { id: 1, name: 'bar', created_at: MIDDLE },
   { id: 2, name: 'baz', created_at: OLDEST },
   { id: 3, name: 'qux', created_at: NEWEST },

@@ -6,6 +6,7 @@
   "node": ">=24.0.0",
   "scripts": {
     "test": "jest",
+    "typecheck": "tsc --noEmit",
     "start": "npx tsx ./src/index.ts",
     "db:push": "npx drizzle-kit push",
     "db:generate": "npx drizzle-kit generate --config=drizzle.config.ts",
