@@ -18,10 +18,6 @@ cd backend && npm install && cp .env.example .env
 cd ../frontend && npm install && cp .env.example .env.local
 ```
 
-Installing the frontend also sets `core.hooksPath` to the versioned `.githooks/`,
-whose `pre-commit` runs Prettier over staged `frontend/` files. See
-[`frontend/README.md`](frontend/README.md#formatting).
-
 The `backend/.env.example` `DATABASE_*` values match the local Postgres container
 that `./dev.sh` starts. The frontend only needs `BACKEND_URL`, which already points
 at `http://localhost:4000` in `.env.example`.

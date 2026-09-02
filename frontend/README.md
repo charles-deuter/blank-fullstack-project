@@ -51,9 +51,3 @@ npm run format:check
 ```console
 npm run format
 ```
-
-`npm install` also points git at the repo's versioned hooks
-(`git config core.hooksPath .githooks`), so `.githooks/pre-commit` formats any
-staged file under `frontend/` and re-stages it. Because it re-stages whole
-files, a partially staged file is committed in full. The hook warns and skips
-when `frontend/node_modules` is missing rather than blocking the commit.
