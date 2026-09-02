@@ -1,6 +1,6 @@
-"use server";
+'use server';
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:4000";
+const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:4000';
 
 export type HealthCheck = {
   /** serverStatus & connectionStatus — true only when both are active */
@@ -13,7 +13,7 @@ export async function getHealthCheck(): Promise<HealthCheck> {
   const url = `${BACKEND_URL}/health-check`;
 
   try {
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetch(url, { cache: 'no-store' });
     const text = await res.text();
 
     if (!res.ok) {
@@ -26,8 +26,8 @@ export async function getHealthCheck(): Promise<HealthCheck> {
     let body = text;
 
     const parsed = JSON.parse(text);
-    const isServerActive = parsed?.server_status === "ACTIVE";
-    const isConnectionActive = parsed?.connection_status === "ACTIVE";
+    const isServerActive = parsed?.server_status === 'ACTIVE';
+    const isConnectionActive = parsed?.connection_status === 'ACTIVE';
     const isHealthy = isServerActive && isConnectionActive;
     body = JSON.stringify(parsed, null, 2);
 

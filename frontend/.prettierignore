@@ -1,0 +1,16 @@
+# Ignore dependencies and build outputs
+node_modules
+.next
+out
+build
+coverage
+
+# Ignore generated files
+next-env.d.ts
+public
+
+# Ignore system files
+.DS_Store
+package-lock.json
+pnpm-lock.yaml
+yarn.lock

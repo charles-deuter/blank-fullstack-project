@@ -1,6 +1,6 @@
-"use server";
+'use server';
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:4000";
+const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:4000';
 
 export type Foo = {
   id: number;
@@ -8,13 +8,9 @@ export type Foo = {
   created_at: string;
 };
 
-export type ListFoosResult =
-  | { ok: true; foos: Foo[] }
-  | { ok: false; message: string };
+export type ListFoosResult = { ok: true; foos: Foo[] } | { ok: false; message: string };
 
-export type CreateFooResult =
-  | { ok: true; foo: Foo }
-  | { ok: false; message: string };
+export type CreateFooResult = { ok: true; foo: Foo } | { ok: false; message: string };
 
 function failureMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
@@ -22,7 +18,7 @@ function failureMessage(err: unknown): string {
 
 export async function listFoos(): Promise<ListFoosResult> {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/foo`, { cache: "no-store" });
+    const res = await fetch(`${BACKEND_URL}/api/foo`, { cache: 'no-store' });
 
     if (!res.ok) {
       return { ok: false, message: `Failed to load foo records (HTTP ${res.status})` };
@@ -37,10 +33,10 @@ export async function listFoos(): Promise<ListFoosResult> {
 export async function createFoo(name: string): Promise<CreateFooResult> {
   try {
     const res = await fetch(`${BACKEND_URL}/api/foo`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),
-      cache: "no-store",
+      cache: 'no-store',
     });
 
     if (!res.ok) {

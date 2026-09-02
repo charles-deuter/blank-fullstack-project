@@ -1,4 +1,4 @@
-import { getHealthCheck } from "@/server-actions/health-check";
+import { getHealthCheck } from '@/server-actions/health-check';
 
 export default async function HelloWorldDashboard() {
   const health = await getHealthCheck();
@@ -9,9 +9,9 @@ export default async function HelloWorldDashboard() {
         HelloWorld
         <span
           title={health.detail}
-          aria-label={`health: ${health.isHealthy ? "up" : "down"}`}
+          aria-label={`health: ${health.isHealthy ? 'up' : 'down'}`}
           className={`inline-block h-3 w-3 shrink-0 cursor-help rounded-full ${
-            health.isHealthy ? "bg-green-500" : "bg-red-500"
+            health.isHealthy ? 'bg-green-500' : 'bg-red-500'
           }`}
         />
       </h1>

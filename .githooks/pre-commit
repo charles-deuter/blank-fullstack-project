@@ -1,0 +1,30 @@
+#!/bin/sh
+# Formats staged frontend files with Prettier and re-stages them.
+# Enabled by `git config core.hooksPath .githooks`, which `npm install`
+# in frontend/ runs via the "prepare" script.
+set -eu
+
+root=$(git rev-parse --show-toplevel)
+
+# Staged files that still exist on disk (added/copied/modified/renamed).
+staged=$(git diff --cached --name-only --diff-filter=ACMR -- frontend | sed -n 's|^frontend/||p')
+[ -n "$staged" ] || exit 0
+
+if [ ! -x "$root/frontend/node_modules/.bin/prettier" ]; then
+  echo "pre-commit: skipping Prettier — run 'npm install' in frontend/ to enable it." >&2
+  exit 0
+fi
+
+# Prettier needs a modern node; frontend/.nvmrc pins the version this repo expects.
+node_major=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)
+if [ "$node_major" -lt 14 ]; then
+  echo "pre-commit: skipping Prettier — node $(node -v 2>/dev/null || echo 'not found') is too old; run 'nvm use' in frontend/." >&2
+  exit 0
+fi
+
+cd "$root/frontend"
+printf '%s\n' "$staged" | tr '\n' '\0' |
+  xargs -0 "$root/frontend/node_modules/.bin/prettier" --write --ignore-unknown --
+
+cd "$root"
+printf '%s\n' "$staged" | sed 's|^|frontend/|' | tr '\n' '\0' | xargs -0 git add --
