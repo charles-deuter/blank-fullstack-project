@@ -56,31 +56,33 @@ export default function FooTable({ initialFoos, initialError }: FooTableProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <button
-        type="button"
-        onClick={handleCreate}
-        disabled={isPending}
-        className="self-start rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-      >
-        {isPending ? "Creating…" : "Create foo"}
-      </button>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <button
+          type="button"
+          onClick={handleCreate}
+          disabled={isPending}
+          className="self-start rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        >
+          {isPending ? "Creating…" : "Create foo"}
+        </button>
 
-      <div role="status" aria-live="polite" className="min-h-9">
-        {status && (
-          <p
-            className={`rounded px-3 py-2 text-sm ${
-              status.ok
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
-            }`}
-          >
-            {status.message}
-          </p>
-        )}
+        <div role="status" aria-live="polite" className="min-h-9">
+          {status && (
+            <p
+              className={`rounded px-3 py-2 text-sm ${
+                status.ok
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
+              {status.message}
+            </p>
+          )}
+        </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         <table className="w-full border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-gray-300 text-gray-500">
