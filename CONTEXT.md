@@ -141,7 +141,20 @@ cd backend && nvm use && npm install && npm test
   client render identical text. Defaulting either causes a hydration mismatch. Any new date
   rendering must do the same.
 - **Every export from a `'use server'` module is a public endpoint.** Don't export helpers
-  from `frontend/src/server-actions/`.
+  from `frontend/src/server-actions/`. `server-actions/wallet.ts` keeps its three reads
+  unexported behind one `loadPaymentsSnapshot` for exactly this reason — which also makes
+  a refresh one client roundtrip instead of three, since the client dispatches server
+  functions sequentially.
+- **`npm run typecheck` in `frontend/` needs a prior `npm run build`.** `layout.tsx` uses
+  `LayoutProps<'/'>`, a type Next generates into `.next/types`. On a fresh worktree
+  `tsc --noEmit` fails with `Cannot find name 'LayoutProps'` until something has built.
+- **Read `frontend/node_modules/next/dist/docs/` before writing frontend code.** Next 16.3
+  ships version-matched docs and `frontend/AGENTS.md` requires them; training-data Next is
+  wrong often enough to matter. Cache Components is **off**, so `use cache` and its
+  prerender rules do not apply here.
+- **Money crosses the wire as integer cents.** `frontend/src/lib/money.ts` is the only
+  place dollars exist: `parseDollarsToCents` does integer-only arithmetic, because
+  `Number('12.34') * 100` is `1233.9999…`.
 
 ## Seams not yet established
 
@@ -170,9 +183,9 @@ Recorded so sessions stop rediscovering it. Not currently scheduled for a fix.
   the live path — don't build on `pool.ts`.
 - `CreateFooBody.name` is typed `any` in `backend/src/api/foo.ts`, contradicting the
   no-`any` rule in `CLAUDE.md`.
-- Component filenames are PascalCase (`FooTable.tsx`, `HelloWorldDashboard.tsx`) while
-  `CLAUDE.md` mandates kebab-case. Backend files do follow kebab-case. **Unresolved** —
-  ask before adding a component either way.
+- Component filenames are PascalCase (`FooTable.tsx`, `PaymentsDashboard.tsx`); every
+  other file in both apps is kebab-case. **Resolved** — `CLAUDE.md` no longer mandates
+  kebab-case, so match the directory you are writing in.
 - The `BACKEND_URL` fallback `?? 'http://localhost:4000'` is duplicated across both files
   in `frontend/src/server-actions/`.
 - The error handler in `backend/src/app.ts` returns `err.stack` in the 500 response body.
