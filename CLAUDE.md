@@ -7,8 +7,8 @@
 - **Testing:** Jest
 
 ## Code Style & Guidelines
-- Always use TypeScript types or interfaces for component props; do not use `any`.
-- Name components using PascalCase and files using kebab-case (e.g., `user-profile.tsx`).
+- Always use TypeScript types or interfaces for component props; do not use `any` for component props.
+- When creating a type for request body always use any then make a runtime validation that it is the expected type.
 - When testing backend components default to using supertest for simple tests, however complicated business logic in 
 services can be unit tested directly
 
