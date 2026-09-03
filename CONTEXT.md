@@ -114,6 +114,21 @@ cd backend && nvm use && npm install && npm test
   rendering must do the same.
 - **Every export from a `'use server'` module is a public endpoint.** Don't export helpers
   from `frontend/src/server-actions/`.
+- **Request bodies are typed `any`, then validated at runtime.** `CLAUDE.md` prescribes this:
+  the compile-time type is a lie about untrusted input, so `CreateFooBody.name` is `any` and
+  `backend/src/api/foo.ts` hand-checks it. Copy that shape; don't "fix" it to a strict type.
+  The no-`any` rule applies to component props, not request bodies.
+- **Env is loaded by the first import in `backend/src/index.ts`.** `import 'dotenv/config'`
+  sits above `./app` on purpose: `app.ts` transitively imports `database/db.ts`, which reads
+  `DATABASE_*` and builds the pool **at import time**. Any `dotenv.config()` call in the
+  module body runs too late to matter. New env vars must be read after that import, not
+  before.
+- **Backend defaults to port 4000, frontend to 3000.** `PORT` falls back to 4000 in
+  `index.ts`, matching `.env.example`, `dev.sh` and the READMEs. Don't reintroduce a 3000
+  fallback — with no `.env` present it makes the backend race Next for the same port.
+- **Filenames: PascalCase for React components, kebab-case everywhere else.**
+  `FooTable.tsx` and `HelloWorldDashboard.tsx` against `test-environment.ts`,
+  `health-check.ts`. Follow the local convention of the directory you're adding to.
 
 ## Seams not yet established
 
@@ -124,7 +139,8 @@ The first feature that needs one of these decides its shape:
 - **No auth, sessions, or users.** Middleware is `express.json()` and `morgan` only.
 - **No validation library.** `backend/src/api/foo.ts` hand-rolls its checks.
 - **No CI.** No `.github/`. `npm test`, `npm run typecheck`, and `npm run format:check`
-  are manual, per app.
+  are manual, per app. All three are currently green in both apps, so they are usable as a
+  gate as-is — wiring them up needs no cleanup first.
 - **No `.artifacts/` and no `docs/adr/`**, though `docs/agents/` describes both. Created on
   first use.
 
@@ -132,13 +148,8 @@ The first feature that needs one of these decides its shape:
 
 Recorded so sessions stop rediscovering it. Not currently scheduled for a fix.
 
-- `backend/src/database/pool.ts` exports `getPool()` and **has zero callers**. `db.ts` is
-  the live path — don't build on `pool.ts`.
-- `CreateFooBody.name` is typed `any` in `backend/src/api/foo.ts`, contradicting the
-  no-`any` rule in `CLAUDE.md`.
-- Component filenames are PascalCase (`FooTable.tsx`, `HelloWorldDashboard.tsx`) while
-  `CLAUDE.md` mandates kebab-case. Backend files do follow kebab-case. **Unresolved** —
-  ask before adding a component either way.
 - The `BACKEND_URL` fallback `?? 'http://localhost:4000'` is duplicated across both files
   in `frontend/src/server-actions/`.
 - The error handler in `backend/src/app.ts` returns `err.stack` in the 500 response body.
+  **Deliberate** — this is a scaffold, and the traces are useful while wiring up a slice.
+  It is the one thing here that must not survive into anything public-facing.
