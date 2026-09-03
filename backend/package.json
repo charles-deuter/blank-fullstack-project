@@ -24,23 +24,19 @@
     "@types/node": "^26.4.1",
     "@types/pg": "^8.23.1",
     "@types/supertest": "^7.2.1",
+    "drizzle-kit": "^0.31.10",
     "jest": "^30.5.1",
     "prettier": "^3.9.6",
     "supertest": "^7.2.2",
-    "testcontainers": "^12.1.0",
     "ts-jest": "^29.4.12",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@types/lodash": "^4.17.25",
     "dotenv": "^17.4.2",
-    "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
-    "lodash": "^4.17.21",
     "morgan": "^1.12.0",
     "pg": "^8.23.0",
-    "ts-node": "^10.9.2",
     "tsx": "^4.23.13"
   },
   "engines": {

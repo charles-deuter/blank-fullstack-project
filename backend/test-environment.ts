@@ -1,9 +1,6 @@
-import dotenv from 'dotenv';
 import { Client } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
-// import { pushSchema } from "drizzle-kit/api";
-// import * as schema from './src/database/schema'
 
 const NodeEnvironment = require('jest-environment-node').TestEnvironment;
 const { PostgreSqlContainer } = require('@testcontainers/postgresql');
@@ -34,10 +31,9 @@ class PostgresEnvironment extends NodeEnvironment {
       await migrate(db, {
         migrationsFolder: './migrations',
       });
-      // await pushSchema(schema, db);
     } catch (error) {
       if (error instanceof Error) {
-        console.log(error.message); // Safe to access now
+        console.log(error.message);
       } else {
         console.log('Unexpected error type:', error);
       }
@@ -51,8 +47,6 @@ class PostgresEnvironment extends NodeEnvironment {
     this.global.process.env.DATABASE_NAME = dbname;
     this.global.process.env.DATABASE_USER = username;
     this.global.process.env.DATABASE_PASSWORD = password;
-
-    dotenv.config({ path: '.env.test' });
   }
 
   async teardown() {
@@ -61,10 +55,6 @@ class PostgresEnvironment extends NodeEnvironment {
     }
 
     await super.teardown();
-  }
-
-  getVmContext() {
-    return super.getVmContext();
   }
 }
 
