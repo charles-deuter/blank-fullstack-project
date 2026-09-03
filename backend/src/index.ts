@@ -1,9 +1,11 @@
+// First import, so DATABASE_* and PORT are populated before ./app pulls in the
+// database module and builds the pool from them.
+import 'dotenv/config';
 import app from './app';
-import dotenv from 'dotenv';
 import { pool } from './database/db';
-dotenv.config();
 
-const PORT = process.env.PORT || 3000;
+// 4000 matches .env.example, dev.sh and the READMEs; 3000 belongs to the frontend.
+const PORT = process.env.PORT || 4000;
 
 // Start the server
 app.listen(PORT, () => {

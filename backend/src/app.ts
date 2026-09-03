@@ -4,9 +4,8 @@ import heartbeat from './database/dal/heartbeat';
 const app = express();
 import morgan from 'morgan';
 
-
 app.use(express.json());
-app.use(morgan('dev'))
+app.use(morgan('dev'));
 
 // Health Check Endpoint
 app.get('/health-check', async (req, res) => {
@@ -22,11 +21,6 @@ app.get('/health-check', async (req, res) => {
       connection_status: 'INACTIVE',
     });
   }
-});
-
-app.get('/force-error', (req, res, next) => {
-  const err = new Error('Something went sideways!');
-  next(err);
 });
 
 app.use('/api', apiRouter);
