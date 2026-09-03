@@ -1,7 +1,7 @@
 import request from 'supertest';
 import app from '../src/app';
 import { db } from '../src/database/db';
-import {foo, FooInsertType} from '../src/database/schema';
+import { foo, FooInsertType } from '../src/database/schema';
 
 // Deliberately spaced so ordering assertions can't tie, and deliberately
 // inserted out of order so passing proves a sort rather than insertion order.

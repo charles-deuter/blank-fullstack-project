@@ -15,7 +15,7 @@ export default defineConfig({
     url: `postgres://${user}:${password}@${host}:${port}/${database}`,
   },
   migrations: {
-    prefix: "timestamp",
-    schema: "public",
+    prefix: 'timestamp',
+    schema: 'public',
   },
 });

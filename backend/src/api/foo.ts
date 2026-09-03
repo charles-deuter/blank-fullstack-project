@@ -14,10 +14,14 @@ const fooController: RequestHandler = async (req, res, next) => {
 };
 
 interface CreateFooBody {
-  name: any,
+  name: any;
 }
 
-const createFooController: RequestHandler = async (req: Request<{}, {}, CreateFooBody>, res, next) => {
+const createFooController: RequestHandler = async (
+  req: Request<{}, {}, CreateFooBody>,
+  res,
+  next,
+) => {
   try {
     const { name } = req.body ?? {};
 
