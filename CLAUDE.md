@@ -9,6 +9,7 @@
 ## Code Style & Guidelines
 - Always use TypeScript types or interfaces for component props; do not use `any` for component props.
 - When creating a type for request body always use any then make a runtime validation that it is the expected type.
+- When creating a type for request path param or query param always use type string
 - When testing backend components default to using supertest for simple tests, however complicated business logic in 
 services can be unit tested directly
 
@@ -16,7 +17,7 @@ services can be unit tested directly
 
 ### Issue tracker
 
-Issues live as local markdown files under `.artifacts/`. See `docs/agents/issue-tracker.md`.
+Issues live as local markdown files under `.artifacts/issues/`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
