@@ -141,7 +141,7 @@ The first feature that needs one of these decides its shape:
 - **No CI.** No `.github/`. `npm test`, `npm run typecheck`, and `npm run format:check`
   are manual, per app. All three are currently green in both apps, so they are usable as a
   gate as-is — wiring them up needs no cleanup first.
-- **No `.artifacts/` and no `docs/adr/`**, though `docs/agents/` describes both. Created on
+- **No `.artifacts/issues/` and no `docs/adr/`**, though `docs/agents/` describes both. Created on
   first use.
 
 ## Known drift

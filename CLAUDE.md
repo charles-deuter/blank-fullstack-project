@@ -17,7 +17,7 @@ services can be unit tested directly
 
 ### Issue tracker
 
-Issues live as local markdown files under `.artifacts/`. See `docs/agents/issue-tracker.md`.
+Issues live as local markdown files under `.artifacts/issues/`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
