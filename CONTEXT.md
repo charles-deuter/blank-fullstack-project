@@ -15,10 +15,11 @@ A **scaffold**, not a product. Two independent apps in one repo, no root `packag
 `./dev.sh` starts a throwaway `postgres:16-alpine` container, applies migrations, then
 runs both apps. Node is pinned per app via `.nvmrc` (`v26.8.1`); run `nvm use` in each.
 
-There is exactly **one worked vertical slice** — the `foo` entity — wired from a
-Postgres table through Express to a React table. Every new feature is built by copying
-it. The value of this document is the shape of that slice and where it is easy to get
-it wrong.
+There are **two worked slices**. The **wallet/exchange** slice is the full one, wired
+from a Postgres table through a service and Express to a React form and table; copy it.
+The **`foo`** slice is backend-only — its frontend was replaced by the wallet — and it
+remains as the minimal route-calls-DAL example. The value of this document is the shape
+of those slices and where it is easy to get them wrong.
 
 ## Glossary
 
@@ -34,26 +35,35 @@ Use these terms verbatim; don't drift to synonyms.
 - **Result union** — the `{ ok: true, ... } | { ok: false, message: string }` shape every
   server action returns instead of throwing.
 - **Heartbeat** — the `SELECT 1` liveness probe behind `/health-check`.
+- **Balance** — integer amount in a currency's smallest unit (cents or yen), stored in `wallet_balances`.
+- **Exchange** — append-only record of a currency conversion, stored in `exchanges`.
+- **Rate** — hardcoded constant: units of target currency per 1 USD.
+- **Service** — business logic module in `backend/src/services/`, owns transactions and validation.
 
 ## Layer map
 
 Request path, traced once:
 
 ```
-browser → server action (Next server) → Express route → DAL → Drizzle → Postgres
+browser → server action (Next server) → Express route → service → DAL → Drizzle → Postgres
 ```
 
-The seven files a slice touches, in the order you create them:
+The files a slice touches, in the order you create them. `foo` is backend-only now —
+its frontend was replaced by the wallet — so the reference slice changes at layer 6.
 
-| # | Layer         | `foo` reference                        | Role |
-| - | ------------- | -------------------------------------- | ---- |
-| 1 | Model         | `backend/src/database/models/foo.ts`   | `pgTable` + `$inferInsert` type export |
-| 2 | Schema barrel | `backend/src/database/schema.ts`       | `export * from './models/foo'` |
-| 3 | DAL           | `backend/src/database/dal/foo.ts`      | Query functions; sole importer of `db` |
-| 4 | Route         | `backend/src/api/foo.ts`               | Router, validation, status codes |
-| 5 | Router mount  | `backend/src/api/router.ts`            | `router.use('/foo', foo)` |
-| 6 | Server action | `frontend/src/server-actions/foo.ts`   | `fetch` to `BACKEND_URL`, returns a result union |
-| 7 | Component     | `frontend/src/components/FooTable.tsx` | `'use client'`, consumes the server action |
+| # | Layer         | Reference                                   | Role |
+| - | ------------- | ------------------------------------------- | ---- |
+| 1 | Model         | `backend/src/database/models/exchange.ts`   | `pgTable` + `$inferInsert` type export |
+| 2 | Schema barrel | `backend/src/database/schema.ts`            | `export * from './models/exchange'` |
+| 3 | DAL           | `backend/src/database/dal/exchange.ts`      | Query functions; sole importer of `db` |
+| 4 | Service       | `backend/src/services/exchange.ts`          | Business logic; owns the transaction |
+| 5 | Route         | `backend/src/api/exchanges.ts`              | Router, validation, status codes |
+| 6 | Router mount  | `backend/src/api/router.ts`                 | `router.use('/exchanges', exchanges)` |
+| 7 | Server action | `frontend/src/server-actions/exchange.ts`   | `fetch` to `BACKEND_URL`, returns a result union |
+| 8 | Component     | `frontend/src/components/ExchangeForm.tsx`  | `'use client'`, consumes the server action |
+
+A slice skips layer 4 when it has no logic beyond a query — `foo` does, and its route
+calls the DAL directly.
 
 `backend/src/database/db.ts` builds the pool and the Drizzle `db` from `DATABASE_*` env
 vars at import time. `backend/src/app.ts` holds `/health-check`, the 404 fallback, and
@@ -104,16 +114,31 @@ cd backend && nvm use && npm install && npm test
   which keeps `BACKEND_URL` server-side. That is why this repo has **no CORS configuration
   anywhere** — a client-side `fetch` to port 4000 would silently require it.
 - **Server actions return result unions, they don't throw.** Components render the failure
-  branch; nothing uses error boundaries. See `ListFoosResult` / `CreateFooResult`.
+  branch; nothing uses error boundaries. See `PerformExchangeResult` / `GetWalletResult`.
 - **The DAL is the only module that imports `db`.** Routes import the DAL.
 - **Deterministic ordering.** `findALL` sorts `created_at DESC, id DESC`. The `id` tiebreak
   is deliberate — rows sharing a timestamp would otherwise shuffle between queries, and the
   tests assert on the order.
-- **Pinned `Intl` formatting.** `FooTable.tsx` pins locale *and* timezone so server and
-  client render identical text. Defaulting either causes a hydration mismatch. Any new date
-  rendering must do the same.
+- **Pinned `Intl` formatting.** `ExchangeLog.tsx` pins locale *and* timezone, and
+  `lib/currency.ts` pins locale, so server and client render identical text. Defaulting
+  either causes a hydration mismatch. Any new date or money rendering must do the same.
 - **Every export from a `'use server'` module is a public endpoint.** Don't export helpers
-  from `frontend/src/server-actions/`.
+  from `frontend/src/server-actions/`. Shared helpers live in `frontend/src/lib/`
+  (`backend.ts` for the origin and fetch-error shapes, `currency.ts` for money math);
+  the server actions import from there and export only their actions and types.
+- **Validation runs in both apps, and that is not duplication to remove.** The form
+  checks everything it can from data the page already holds — amount present, positive,
+  within the currency's decimal places, within the current balance — so a doomed
+  exchange never costs a round trip (`CLAUDE.md` prescribes this). Messages appear on
+  blur or submit, inline under the field. The backend re-checks the same rules because
+  it cannot trust a client. Deleting either side is a bug: the frontend owes the user
+  fast feedback, the backend owes the database correctness. This is why `ExchangeForm`
+  takes `balances` as a prop.
+- **Money is an integer in the currency's smallest unit.** Cents for USD/EUR/GBP/CNY, yen
+  for JPY (`decimalPlaces` 0). The `10 ** decimalPlaces` arithmetic lives in
+  `backend/src/constants/currencies.ts` and `frontend/src/lib/currency.ts`; nothing else
+  should do it. Both round with `Math.round`, so the form's preview equals the amount the
+  exchange credits.
 - **Request bodies are typed `any`, then validated at runtime.** `CLAUDE.md` prescribes this:
   the compile-time type is a lie about untrusted input, so `CreateFooBody.name` is `any` and
   `backend/src/api/foo.ts` hand-checks it. Copy that shape; don't "fix" it to a strict type.
@@ -127,16 +152,15 @@ cd backend && nvm use && npm install && npm test
   `index.ts`, matching `.env.example`, `dev.sh` and the READMEs. Don't reintroduce a 3000
   fallback — with no `.env` present it makes the backend race Next for the same port.
 - **Filenames: PascalCase for React components, kebab-case everywhere else.**
-  `FooTable.tsx` and `HelloWorldDashboard.tsx` against `test-environment.ts`,
-  `health-check.ts`. Follow the local convention of the directory you're adding to.
+  `ExchangeForm.tsx` and `WalletDisplay.tsx` against `test-environment.ts`,
+  `wallet-balance.ts`. Follow the local convention of the directory you're adding to.
 
 ## Seams not yet established
 
 The first feature that needs one of these decides its shape:
 
-- **No service layer.** `CLAUDE.md` refers to unit-testing "complicated business logic in
-  services", but `backend/src/services/` does not exist. Logic currently sits in the route.
-- **No auth, sessions, or users.** Middleware is `express.json()` and `morgan` only.
+- **No auth, sessions, or users.** Middleware is `express.json()` and `morgan` only. The
+  wallet is a single seeded row set with no owner, which is why nothing scopes it.
 - **No validation library.** `backend/src/api/foo.ts` hand-rolls its checks.
 - **No CI.** No `.github/`. `npm test`, `npm run typecheck`, and `npm run format:check`
   are manual, per app. All three are currently green in both apps, so they are usable as a
@@ -148,8 +172,9 @@ The first feature that needs one of these decides its shape:
 
 Recorded so sessions stop rediscovering it. Not currently scheduled for a fix.
 
-- The `BACKEND_URL` fallback `?? 'http://localhost:4000'` is duplicated across both files
-  in `frontend/src/server-actions/`.
+- `frontend/src/components/HelloWorldDashboard.tsx` and its `health-check` server action
+  are no longer rendered anywhere; the wallet replaced the home page. Kept as the health
+  probe's only worked example.
 - The error handler in `backend/src/app.ts` returns `err.stack` in the 500 response body.
   **Deliberate** — this is a scaffold, and the traces are useful while wiring up a slice.
   It is the one thing here that must not survive into anything public-facing.

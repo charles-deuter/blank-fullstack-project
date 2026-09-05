@@ -12,6 +12,8 @@
 - When creating a type for request path param or query param always use type string
 - When testing backend components default to using supertest for simple tests, however complicated business logic in 
 services can be unit tested directly
+- Frontend validations give a seamless user experience and prevent unnecessary requests we already know will fail. Don’t wait on the backend to do simple validations that can be done with the data readily available on the frontend. Trigger validation messages on blur or on form submit. Feedback style should be inline form field validations.
+
 
 ## Agent skills
 
