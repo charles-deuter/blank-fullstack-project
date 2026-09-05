@@ -8,6 +8,20 @@
       "when": 1788327141581,
       "tag": "20260902053221_furry_hemingway",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788573854723,
+      "tag": "20260905020414_currency_wallet",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788573860461,
+      "tag": "20260905020420_seed_demo_wallet",
+      "breakpoints": true
     }
   ]
 }
