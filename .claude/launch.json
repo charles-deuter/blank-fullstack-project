@@ -6,6 +6,12 @@
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-lc", "npm --prefix frontend run dev"],
       "port": 3000
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-lc", "npm --prefix backend start"],
+      "port": 4000
     }
   ]
 }

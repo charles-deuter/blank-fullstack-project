@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import '@/styles/globals.css';
 
 export const metadata: Metadata = {
-  title: "Let's get to hacking",
-  description: 'Minimalist hello-world frontend',
+  title: 'Currency Exchange',
+  description: 'Multi-currency wallet with exchange transactions',
   icons: { icon: '/favicon.ico' },
 };
 
