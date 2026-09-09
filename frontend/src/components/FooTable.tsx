@@ -57,12 +57,12 @@ export default function FooTable({ initialFoos, initialError }: FooTableProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-3 rounded-lg border border-edge bg-surface p-4 shadow-sm">
         <button
           type="button"
           onClick={handleCreate}
           disabled={isPending}
-          className="self-start rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="self-start rounded bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
         >
           {isPending ? 'Creating…' : 'Create foo'}
         </button>
@@ -71,7 +71,7 @@ export default function FooTable({ initialFoos, initialError }: FooTableProps) {
           {status && (
             <p
               className={`rounded px-3 py-2 text-sm ${
-                status.ok ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                status.ok ? 'bg-success/15 text-success' : 'bg-danger/15 text-danger'
               }`}
             >
               {status.message}
@@ -80,10 +80,10 @@ export default function FooTable({ initialFoos, initialError }: FooTableProps) {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="overflow-x-auto rounded-lg border border-edge bg-surface p-4 shadow-sm">
         <table className="w-full border-collapse text-left text-sm">
           <thead>
-            <tr className="border-b border-gray-300 text-gray-500">
+            <tr className="border-b border-edge text-muted">
               <th className="py-2 pr-4 font-medium">id</th>
               <th className="py-2 pr-4 font-medium">name</th>
               <th className="py-2 font-medium">created_at (UTC)</th>
@@ -92,13 +92,13 @@ export default function FooTable({ initialFoos, initialError }: FooTableProps) {
           <tbody>
             {foos.length === 0 ? (
               <tr>
-                <td colSpan={3} className="py-4 text-gray-500">
+                <td colSpan={3} className="py-4 text-muted">
                   No foo records yet
                 </td>
               </tr>
             ) : (
               foos.map((foo) => (
-                <tr key={foo.id} className="border-b border-gray-200">
+                <tr key={foo.id} className="border-b border-edge">
                   <td className="py-2 pr-4">{foo.id}</td>
                   <td className="py-2 pr-4">{foo.name}</td>
                   <td className="py-2">

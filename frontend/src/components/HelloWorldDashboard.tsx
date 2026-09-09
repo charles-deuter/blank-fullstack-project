@@ -11,7 +11,7 @@ export default async function HelloWorldDashboard() {
           title={health.detail}
           aria-label={`health: ${health.isHealthy ? 'up' : 'down'}`}
           className={`inline-block h-3 w-3 shrink-0 cursor-help rounded-full ${
-            health.isHealthy ? 'bg-green-500' : 'bg-red-500'
+            health.isHealthy ? 'bg-success' : 'bg-danger'
           }`}
         />
       </h1>

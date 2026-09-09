@@ -1,1 +1,39 @@
 @import 'tailwindcss';
+
+/* `class` strategy: the plugin emits `.form-input` / `.form-select` / `.form-checkbox`
+   and no element-level rules, so nothing competes with the theme. The shared field
+   components in src/components/forms/ pair each plugin class with theme utilities —
+   the plugin supplies structure (appearance reset, padding, checkmark SVGs), the
+   utilities supply color. Bare form elements are intentionally left unstyled. */
+@plugin '@tailwindcss/forms' {
+  strategy: class;
+}
+
+/* Dark theme palette. Components reference these by role (bg-surface, text-muted,
+   border-edge) instead of raw palette utilities, so retuning the theme is a change
+   to this block alone. */
+@theme {
+  --color-canvas: #0d1117;
+  --color-surface: #161b22;
+  --color-elevated: #1c2430;
+  --color-edge: #2a323d;
+  --color-ink: #e6edf3;
+  --color-muted: #8b949e;
+  --color-accent: #2f81f7;
+  --color-accent-hover: #4c93ff;
+  --color-success: #3fb950;
+  --color-danger: #f85149;
+}
+
+@layer base {
+  /* Makes the browser paint its own chrome dark too — scrollbars, native date and
+     select popups, autofill. Without it those stay light against the dark page. */
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+  }
+}
