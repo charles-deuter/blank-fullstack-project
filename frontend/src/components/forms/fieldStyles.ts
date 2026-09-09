@@ -49,7 +49,12 @@ export function textControlClasses(
   hasError: boolean,
   extra?: string,
 ): string {
-  return joinClassnames(pluginClass, TEXT_BASE, hasError ? TEXT_INVALID : TEXT_VALID, extra);
+  return joinClassnames(
+    pluginClass,
+    TEXT_BASE,
+    hasError ? TEXT_INVALID : TEXT_VALID,
+    extra,
+  );
 }
 
 /** Classes for a checkbox or radio. See `textControlClasses` on `extra`. */
