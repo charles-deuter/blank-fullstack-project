@@ -32,37 +32,26 @@ const TOGGLE_VALID = 'border-edge focus:ring-accent/40';
 
 const TOGGLE_INVALID = 'border-danger focus:ring-danger/40';
 
-/** Joins class names, dropping the falsy branches of conditionals. */
-function joinClassnames(...parts: Array<string | false | null | undefined>): string {
-  return parts.filter(Boolean).join(' ');
+export function formInputClasses(hasError: boolean, extra?: string): string {
+  return ['form-input', TEXT_BASE, hasError ? TEXT_INVALID : TEXT_VALID, extra]
+    .filter(Boolean)
+    .join(' ');
 }
 
-/**
- * Classes for a text-like control (input, textarea, select).
- *
- * `extra` is appended last, but a utility there that targets a property already set
- * above wins or loses on emission order, not on position — override colors by
- * editing this file rather than by passing a competing class.
- */
-export function textControlClasses(
-  pluginClass: 'form-input' | 'form-textarea' | 'form-select',
-  hasError: boolean,
-  extra?: string,
-): string {
-  return joinClassnames(
-    pluginClass,
-    TEXT_BASE,
-    hasError ? TEXT_INVALID : TEXT_VALID,
-    extra,
-  );
+export function formTextAreaClasses(hasError: boolean, extra?: string): string {
+  return ['form-textarea', TEXT_BASE, hasError ? TEXT_INVALID : TEXT_VALID, extra]
+    .filter(Boolean)
+    .join(' ');
 }
 
-/** Classes for a checkbox or radio. See `textControlClasses` on `extra`. */
-export function toggleControlClasses(hasError: boolean, extra?: string): string {
-  return joinClassnames(
-    'form-checkbox',
-    TOGGLE_BASE,
-    hasError ? TOGGLE_INVALID : TOGGLE_VALID,
-    extra,
-  );
+export function formSelectClasses(hasError: boolean, extra?: string): string {
+  return ['form-select', TEXT_BASE, hasError ? TEXT_INVALID : TEXT_VALID, extra]
+    .filter(Boolean)
+    .join(' ');
+}
+
+export function formCheckboxClasses(hasError: boolean, extra?: string): string {
+  return ['form-checkbox', TOGGLE_BASE, hasError ? TOGGLE_INVALID : TOGGLE_VALID, extra]
+    .filter(Boolean)
+    .join(' ');
 }

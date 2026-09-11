@@ -2,8 +2,8 @@
 
 import { useId } from 'react';
 import type { InputHTMLAttributes } from 'react';
-import FieldShell from './FieldShell';
-import { textControlClasses } from './fieldStyles';
+import FieldWrapper from './FieldWrapper';
+import { formInputClasses } from './fieldStyles';
 
 /** The input types @tailwindcss/forms styles as text-like. */
 type TextInputType =
@@ -27,15 +27,15 @@ export default function TextField({
   const errorId = `${controlId}-error`;
 
   return (
-    <FieldShell controlId={controlId} errorId={errorId} label={label} error={error}>
+    <FieldWrapper controlId={controlId} errorId={errorId} label={label} error={error}>
       <input
         {...inputProps}
         id={controlId}
         type={type}
         aria-invalid={error ? true : undefined}
         aria-describedby={errorId}
-        className={textControlClasses('form-input', Boolean(error), className)}
+        className={formInputClasses(Boolean(error), className)}
       />
-    </FieldShell>
+    </FieldWrapper>
   );
 }

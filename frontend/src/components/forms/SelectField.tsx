@@ -2,8 +2,8 @@
 
 import { useId } from 'react';
 import type { ReactNode, SelectHTMLAttributes } from 'react';
-import FieldShell from './FieldShell';
-import { textControlClasses } from './fieldStyles';
+import FieldWrapper from './FieldWrapper';
+import { formSelectClasses } from './fieldStyles';
 
 type SelectFieldProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, 'id'> & {
   label: string;
@@ -23,16 +23,16 @@ export default function SelectField({
   const errorId = `${controlId}-error`;
 
   return (
-    <FieldShell controlId={controlId} errorId={errorId} label={label} error={error}>
+    <FieldWrapper controlId={controlId} errorId={errorId} label={label} error={error}>
       <select
         {...selectProps}
         id={controlId}
         aria-invalid={error ? true : undefined}
         aria-describedby={errorId}
-        className={textControlClasses('form-select', Boolean(error), className)}
+        className={formSelectClasses(Boolean(error), className)}
       >
         {children}
       </select>
-    </FieldShell>
+    </FieldWrapper>
   );
 }

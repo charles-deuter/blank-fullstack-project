@@ -3,7 +3,7 @@
 import { useId } from 'react';
 import type { InputHTMLAttributes } from 'react';
 import FieldError from './FieldError';
-import { toggleControlClasses } from './fieldStyles';
+import { formCheckboxClasses } from './fieldStyles';
 
 type CheckboxFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'type'> & {
   label: string;
@@ -32,7 +32,7 @@ export default function CheckboxField({
           type="checkbox"
           aria-invalid={error ? true : undefined}
           aria-describedby={errorId}
-          className={toggleControlClasses(Boolean(error), className)}
+          className={formCheckboxClasses(Boolean(error), className)}
         />
         <label htmlFor={controlId} className="text-sm text-ink">
           {label}

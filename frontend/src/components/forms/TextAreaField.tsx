@@ -2,8 +2,8 @@
 
 import { useId } from 'react';
 import type { TextareaHTMLAttributes } from 'react';
-import FieldShell from './FieldShell';
-import { textControlClasses } from './fieldStyles';
+import FieldWrapper from './FieldWrapper';
+import { formTextAreaClasses } from './fieldStyles';
 
 type TextAreaFieldProps = Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'id'> & {
   label: string;
@@ -21,15 +21,15 @@ export default function TextAreaField({
   const errorId = `${controlId}-error`;
 
   return (
-    <FieldShell controlId={controlId} errorId={errorId} label={label} error={error}>
+    <FieldWrapper controlId={controlId} errorId={errorId} label={label} error={error}>
       <textarea
         {...textareaProps}
         id={controlId}
         rows={rows}
         aria-invalid={error ? true : undefined}
         aria-describedby={errorId}
-        className={textControlClasses('form-textarea', Boolean(error), className)}
+        className={formTextAreaClasses(Boolean(error), className)}
       />
-    </FieldShell>
+    </FieldWrapper>
   );
 }
