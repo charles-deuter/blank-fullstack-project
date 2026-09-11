@@ -1,11 +1,7 @@
-import FooPanel from '@/components/FooPanel';
-import HelloWorldDashboard from '@/components/HelloWorldDashboard';
+import WalletDashboard from '@/components/WalletDashboard';
+
+const DEMO_WALLET_ID = 1;
 
 export default function Home() {
-  return (
-    <>
-      <HelloWorldDashboard />
-      <FooPanel />
-    </>
-  );
+  return <WalletDashboard walletId={DEMO_WALLET_ID} />;
 }

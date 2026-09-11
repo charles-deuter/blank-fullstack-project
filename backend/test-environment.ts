@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { Client } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
@@ -40,6 +41,11 @@ class PostgresEnvironment extends NodeEnvironment {
 
       throw new Error('Unable to apply migrations');
     }
+
+    // Tests run against the same seeded wallet the app ships with, so a spec can
+    // assert on the seed itself rather than reinventing it as a fixture.
+    await client.query(readFileSync('./seed.sql', 'utf8'));
+
     await client.end();
 
     this.global.process.env.DATABASE_HOST = host;

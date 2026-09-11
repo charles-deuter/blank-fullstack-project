@@ -50,10 +50,17 @@ echo "[postgres] ready"
 echo "[postgres] applying migrations"
 ( cd backend && npm run db:migrate ) 2>&1 | sed 's/^/[migrate] /'
 
-( cd backend && exec npm start 2>&1 | sed 's/^/[backend] /' ) &
+# The demo wallet is fixture data the UI expects to exist, not schema.
+echo "[postgres] seeding demo wallet"
+( cd backend && npm run db:seed ) 2>&1 | sed 's/^/[seed] /'
+
+# Both ports are pinned here rather than left to the environment: dotenv does not
+# override an already-set variable, so an inherited PORT would silently move the
+# backend onto the frontend's port and every API call would fail to connect.
+( cd backend && PORT=4000 exec npm start 2>&1 | sed 's/^/[backend] /' ) &
 pids+=("$!")
 
-( cd frontend && exec npm run dev 2>&1 | sed 's/^/[frontend] /' ) &
+( cd frontend && PORT=3000 exec npm run dev 2>&1 | sed 's/^/[frontend] /' ) &
 pids+=("$!")
 
 wait

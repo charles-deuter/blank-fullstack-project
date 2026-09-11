@@ -6,6 +6,12 @@
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-lc", "npm --prefix frontend run dev"],
       "port": 3000
+    },
+    {
+      "name": "fullstack",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-lc", "./dev.sh"],
+      "port": 3000
     }
   ]
 }
