@@ -60,8 +60,11 @@ Follow this order. Each step lists the file to create and what goes in it.
 | `SelectField`    | native `<select>`                                 |
 | `ListboxField`   | Headless UI `<Listbox>` (custom accessible dropdown) |
 | `CheckboxField`  | `<input type="checkbox">`                         |
+| `Form`           | `<form>` — state, validation, submission lifecycle |
 
-All take a `label` prop and an optional `error` prop. When `error` is set, the field shows a danger border and an inline validation message with `aria-live="polite"`.
+All field components take a `label` prop and an optional `error` prop. When `error` is set, the field shows a danger border and an inline validation message with `aria-live="polite"`.
+
+`Form` wraps the field components with a render-prop API: pass `initialValues`, `validationRules`, and an `onSubmit` callback. It validates on blur and on submit, disables fields during submission, auto-resets on success, and displays a form-level error when `onSubmit` returns a string. Boolean initial values produce `checked`/`onChange` props (for CheckboxField); string values produce `value`/`onChange` that handle both event-based and raw-value onChange (for ListboxField).
 
 `FieldWrapper` provides the shared label-above-control layout. `FieldError` renders the inline message. `fieldStyles.ts` exports class builders (`formInputClasses`, `formTextAreaClasses`, `formSelectClasses`, `formCheckboxClasses`) that handle valid/invalid styling.
 
