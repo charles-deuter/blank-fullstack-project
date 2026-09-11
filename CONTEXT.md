@@ -98,7 +98,18 @@ The theme is dark-only. `color-scheme: dark` is set on `:root`. `@tailwindcss/fo
 
 ## Testing
 
-Backend only — no frontend test runner.
+### Frontend
+
+Jest + `@swc/jest` + Testing Library. Tests live colocated in `__tests__/` directories next to the code they test.
+
+- **Form kit specs.** `frontend/src/components/forms/__tests__/` covers all five field components — rendering, error states, aria attributes, and prop forwarding.
+- **Headless UI.** `jest.setup.ts` polyfills `ResizeObserver` for jsdom. Headless UI's `ListboxButton` overrides `aria-describedby`, so ListboxField tests find the error element by `role="status"` instead of by ID.
+
+```bash
+cd frontend && npm test
+```
+
+### Backend
 
 - **Real Postgres, no mocks.** Testcontainers starts a `postgres:16-alpine` per spec file, runs migrations, injects `DATABASE_*` env vars.
 - **Flat directory.** Specs go directly in `backend/test/`. A spec in a subdirectory silently does not run.
