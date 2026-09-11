@@ -9,7 +9,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "format": "npx prettier --write .",
-    "format:check": "npx prettier --check ."
+    "format:check": "npx prettier --check .",
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.10",
@@ -18,13 +19,19 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@swc/jest": "^0.2.39",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/jest": "^30.0.0",
     "@types/node": "^26.4.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "jest": "^30.5.1",
+    "jest-environment-jsdom": "^30.5.1",
     "prettier": "^3.9.6",
     "tailwindcss": "^4",
     "typescript": "^5.9.3"
