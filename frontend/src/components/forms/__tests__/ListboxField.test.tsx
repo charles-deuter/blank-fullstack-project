@@ -60,7 +60,9 @@ describe('ListboxField', () => {
 
   it('calls onChange when an option is selected', () => {
     const handleChange = jest.fn();
-    render(<ListboxField label="Color" options={options} value="" onChange={handleChange} />);
+    render(
+      <ListboxField label="Color" options={options} value="" onChange={handleChange} />,
+    );
     fireEvent.click(screen.getByLabelText('Color'));
     fireEvent.click(screen.getByText('Blue'));
     expect(handleChange).toHaveBeenCalledWith('blue');

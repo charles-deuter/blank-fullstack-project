@@ -27,7 +27,11 @@ describe('SelectField', () => {
   });
 
   it('renders error state when error prop is set', () => {
-    render(<SelectField label="Role" error="Required">{options}</SelectField>);
+    render(
+      <SelectField label="Role" error="Required">
+        {options}
+      </SelectField>,
+    );
     const select = screen.getByLabelText('Role');
     expect(select).toHaveAttribute('aria-invalid', 'true');
     const errorId = select.getAttribute('aria-describedby')!;
@@ -35,12 +39,20 @@ describe('SelectField', () => {
   });
 
   it('forwards disabled prop', () => {
-    render(<SelectField label="Role" disabled>{options}</SelectField>);
+    render(
+      <SelectField label="Role" disabled>
+        {options}
+      </SelectField>,
+    );
     expect(screen.getByLabelText('Role')).toBeDisabled();
   });
 
   it('forwards name prop', () => {
-    render(<SelectField label="Role" name="role">{options}</SelectField>);
+    render(
+      <SelectField label="Role" name="role">
+        {options}
+      </SelectField>,
+    );
     expect(screen.getByLabelText('Role')).toHaveAttribute('name', 'role');
   });
 });

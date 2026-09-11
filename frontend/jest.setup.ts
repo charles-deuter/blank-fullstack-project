@@ -1,5 +1,9 @@
+// jsdom doesn't implement ResizeObserver. Headless UI calls observe() internally,
+// so the methods must exist — an empty class body isn't enough.
 global.ResizeObserver = class ResizeObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
+  public observe() {}
+
+  public unobserve() {}
+
+  public disconnect() {}
 };
