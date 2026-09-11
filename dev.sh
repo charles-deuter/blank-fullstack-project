@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Start a local Postgres, the backend (port 4000), and the frontend (port 3000).
-# Ctrl-C stops all three; the Postgres container is removed on exit.
+# Ctrl-C (or a closed terminal, via HUP) stops all three; the Postgres container is removed on exit.
 set -euo pipefail
 set -m  # each background job gets its own process group, so we can kill its whole tree
 
@@ -10,7 +10,7 @@ PG_CONTAINER=local-postgres
 
 pids=()
 cleanup() {
-  trap - INT TERM EXIT
+  trap - INT TERM HUP EXIT
   for pid in "${pids[@]}"; do
     # negative PID = signal the whole process group (npm -> tsx/next -> node, sed)
     kill -TERM -- "-${pid}" 2>/dev/null || kill -TERM "${pid}" 2>/dev/null || true
@@ -19,7 +19,12 @@ cleanup() {
   echo "[postgres] stopping $PG_CONTAINER"
   docker stop "$PG_CONTAINER" >/dev/null 2>&1 || true
 }
-trap cleanup INT TERM EXIT
+# On a signal, exit after cleanup; otherwise bash resumes the script after the
+# handler returns (e.g. a HUP during migrations would still launch the apps).
+trap 'cleanup; exit 130' INT
+trap 'cleanup; exit 143' TERM
+trap 'cleanup; exit 129' HUP
+trap cleanup EXIT
 
 echo "[postgres] starting $PG_CONTAINER"
 # A leftover container from a killed run would win the name, and the readiness
