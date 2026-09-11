@@ -1,155 +1,125 @@
 # CONTEXT
 
-Orientation for anyone — human or agent — about to add a feature here. Read this before
-exploring; it is the map that stops each session re-deriving the same facts.
+Read this before exploring. It tells you what exists, how to build on it, and where the traps are.
 
-## What this repo is
+## Project layout
 
-A **scaffold**, not a product. Two independent apps in one repo, no root `package.json`:
+Two independent apps, no root `package.json`:
 
-| Folder      | Stack                                 | Dev port |
-| ----------- | ------------------------------------- | -------- |
-| `backend/`  | Express 5 + Drizzle (PostgreSQL) + Jest | `4000` |
-| `frontend/` | Next.js (App Router) + Tailwind 4      | `3000` |
+| App         | Stack                                      | Port   |
+| ----------- | ------------------------------------------ | ------ |
+| `backend/`  | Express 5, Drizzle ORM, PostgreSQL, Jest   | `4000` |
+| `frontend/` | Next.js (App Router), Tailwind 4, Headless UI | `3000` |
 
-`./dev.sh` starts a throwaway `postgres:16-alpine` container, applies migrations, then
-runs both apps. Node is pinned per app via `.nvmrc` (`v26.8.1`); run `nvm use` in each.
+`./dev.sh` starts a throwaway `postgres:16-alpine` container, applies migrations, and runs both apps. The container is `--rm` so the database is empty every run.
 
-There is exactly **one worked vertical slice** — the `foo` entity — wired from a
-Postgres table through Express to a React table. Every new feature is built by copying
-it. The value of this document is the shape of that slice and where it is easy to get
-it wrong.
+One worked vertical slice — the `foo` entity — is wired end to end from Postgres through Express to a React table. Every new feature copies it.
 
-## Glossary
+## How to add a feature
 
-Use these terms verbatim; don't drift to synonyms.
+Follow this order. Each step lists the file to create and what goes in it.
 
-- **Slice** — one entity's full path across all seven layers below. The unit of feature work.
-- **Model** — a Drizzle `pgTable` definition in `backend/src/database/models/`.
-- **Schema barrel** — `backend/src/database/schema.ts`, which re-exports every model.
-- **DAL** — data access layer, `backend/src/database/dal/`. The only code that touches `db`.
-- **Route** — an Express router in `backend/src/api/`, mounted under `/api`.
-- **Server action** — a `'use server'` module in `frontend/src/server-actions/`; the
-  frontend's only path to the backend.
-- **Result union** — the `{ ok: true, ... } | { ok: false, message: string }` shape every
-  server action returns instead of throwing.
-- **Heartbeat** — the `SELECT 1` liveness probe behind `/health-check`.
+1. **Model** — `backend/src/database/models/<entity>.ts`
+   Copy `models/foo.ts`. Define a `pgTable` and export a `$inferInsert` type.
 
-## Layer map
+2. **Schema barrel** — `backend/src/database/schema.ts`
+   Add `export * from './models/<entity>'`.
+   **This is the trap.** `backend/drizzle.config.ts` points at this one file. An unlisted model produces no migration and no error — you just silently have no table.
 
-Request path, traced once:
+3. **Generate migration** — `cd backend && npm run db:generate`
 
-```
-browser → server action (Next server) → Express route → DAL → Drizzle → Postgres
-```
+4. **Apply migration** — `npm run db:migrate`
+   (`dev.sh` migrates on every start since the container is fresh, so this step is only needed mid-session.)
 
-The seven files a slice touches, in the order you create them:
+5. **DAL** — `backend/src/database/dal/<entity>.ts`
+   Copy `dal/foo.ts`. This is the only code that imports `db`. Always sort with a tiebreak column (`created_at DESC, id DESC`).
 
-| # | Layer         | `foo` reference                        | Role |
-| - | ------------- | -------------------------------------- | ---- |
-| 1 | Model         | `backend/src/database/models/foo.ts`   | `pgTable` + `$inferInsert` type export |
-| 2 | Schema barrel | `backend/src/database/schema.ts`       | `export * from './models/foo'` |
-| 3 | DAL           | `backend/src/database/dal/foo.ts`      | Query functions; sole importer of `db` |
-| 4 | Route         | `backend/src/api/foo.ts`               | Router, validation, status codes |
-| 5 | Router mount  | `backend/src/api/router.ts`            | `router.use('/foo', foo)` |
-| 6 | Server action | `frontend/src/server-actions/foo.ts`   | `fetch` to `BACKEND_URL`, returns a result union |
-| 7 | Component     | `frontend/src/components/FooTable.tsx` | `'use client'`, consumes the server action |
+6. **Route** — `backend/src/api/<entity>.ts`
+   Copy `api/foo.ts`. Body type fields are `any`, validated at runtime (not compile time — this is a CLAUDE.md rule). Route catches errors with `next(err)`.
 
-`backend/src/database/db.ts` builds the pool and the Drizzle `db` from `DATABASE_*` env
-vars at import time. `backend/src/app.ts` holds `/health-check`, the 404 fallback, and
-the error handler.
+7. **Mount** — `backend/src/api/router.ts`
+   Add `router.use('/<entity>', <entity>)`.
 
-## Adding a new entity
+8. **Server action** — `frontend/src/server-actions/<entity>.ts`
+   Copy `server-actions/foo.ts`. Fetches `BACKEND_URL` (server-side only). Returns a result union: `{ ok: true, ... } | { ok: false, message: string }`. Never throws. Every export from this file is a public endpoint — don't export helpers.
 
-1. Write the model in `backend/src/database/models/<entity>.ts` — copy `models/foo.ts`.
-2. **Re-export it from `backend/src/database/schema.ts`.** Not optional: `drizzle.config.ts`
-   points `schema` at that one file, so an unlisted model is invisible to `db:generate`
-   and produces **no migration, with no error**. This is the most common way to lose an hour.
-3. `cd backend && npm run db:generate` — migrations are generated, never hand-written.
-4. `npm run db:migrate` to apply. `dev.sh` migrates on every start because the container
-   is created fresh (`docker run --rm`) and is empty each run.
-5. Add `backend/src/database/dal/<entity>.ts`. Reuse the shapes in `dal/foo.ts`
-   (`create`, `findALL`); `dal/heartbeat.ts` is the minimal raw-SQL example.
-6. Add `backend/src/api/<entity>.ts` and mount it in `backend/src/api/router.ts`.
-7. Add specs in `backend/test/` (see below), then the server action and component.
+9. **Server component** — `frontend/src/components/<Entity>Panel.tsx`
+   Copy `FooPanel.tsx`. Calls the server action and passes the result as props to the client component.
+
+10. **Client component** — `frontend/src/components/<Entity>Table.tsx` (or whatever UI)
+    `'use client'`. Receives data as props from the server component. Uses the form kit (below) for any inputs.
+
+## Form kit
+
+`frontend/src/components/forms/` has ready-to-use form components. Don't rebuild these.
+
+| Component        | What it wraps                                     |
+| ---------------- | ------------------------------------------------- |
+| `TextField`      | `<input>` — text, email, password, number, date, etc. |
+| `TextAreaField`  | `<textarea>`                                      |
+| `SelectField`    | native `<select>`                                 |
+| `ListboxField`   | Headless UI `<Listbox>` (custom accessible dropdown) |
+| `CheckboxField`  | `<input type="checkbox">`                         |
+
+All take a `label` prop and an optional `error` prop. When `error` is set, the field shows a danger border and an inline validation message with `aria-live="polite"`.
+
+`FieldWrapper` provides the shared label-above-control layout. `FieldError` renders the inline message. `fieldStyles.ts` exports class builders (`formInputClasses`, `formTextAreaClasses`, `formSelectClasses`, `formCheckboxClasses`) that handle valid/invalid styling.
+
+## Design tokens
+
+`frontend/src/styles/globals.css` defines semantic color tokens via `@theme`. Use these as Tailwind utilities — never raw palette values.
+
+| Token          | Role                        | Usage                |
+| -------------- | --------------------------- | -------------------- |
+| `canvas`       | page background             | `bg-canvas`          |
+| `surface`      | card / panel background     | `bg-surface`         |
+| `elevated`     | input / raised background   | `bg-elevated`        |
+| `edge`         | borders                     | `border-edge`        |
+| `ink`          | primary text                | `text-ink`           |
+| `muted`        | secondary text, placeholders| `text-muted`         |
+| `accent`       | interactive elements        | `bg-accent`, `text-accent` |
+| `accent-hover` | hover state                 | `hover:bg-accent-hover` |
+| `success`      | positive feedback           | `text-success`       |
+| `danger`       | errors, destructive actions | `text-danger`, `border-danger` |
+
+The theme is dark-only. `color-scheme: dark` is set on `:root`. `@tailwindcss/forms` is loaded with `strategy: class` — bare form elements are intentionally unstyled; the form kit components apply the plugin classes.
+
+## Architecture rules
+
+- The browser never calls Express. Everything routes through `frontend/src/server-actions/`, which keeps `BACKEND_URL` server-side. There is no CORS configuration.
+- Server actions return result unions, never throw. Components render the failure branch.
+- The DAL is the only module that imports `db`. Routes import the DAL.
+- Request bodies are typed `any`, then validated at runtime with hand-rolled checks. The no-`any` rule applies to component props, not request bodies.
+- `import 'dotenv/config'` must be the first import in `backend/src/index.ts`. `db.ts` reads `DATABASE_*` env vars and builds the pool at import time. Any dotenv call in the module body runs too late.
+- Backend defaults to port 4000, frontend to 3000. Don't add a 3000 fallback to the backend.
+- Pin `Intl` locale AND timezone in any date rendering to avoid hydration mismatches between server and client.
+- Form field valid/invalid styles are mutually exclusive branches, not additive. `border-edge` and `border-danger` share specificity.
+- Filenames: PascalCase for React components, kebab-case everything else.
 
 ## Testing
 
-Backend only — **the frontend has no test runner configured at all.** Whether to add one
-is an open decision.
+Backend only — no frontend test runner.
 
-- **Real Postgres, no mocks.** `backend/test-environment.ts` is a custom Jest environment
-  that starts a Testcontainers `postgres:16-alpine`, runs the real migrations against it,
-  and injects `DATABASE_*` into the environment before the test module imports anything.
-- **One container per spec file.** Isolated, but slow — budget for container startup per file.
-- **`testMatch` is `<rootDir>/test/*` — flat.** A spec in `test/some-dir/` **will not run**
-  and will not warn. New specs go directly in `backend/test/`.
-- **Supertest against the app**, per `CLAUDE.md`. `backend/test/test-foo-create.spec.ts` is
-  the reference: happy path, persistence check, `it.each` validation table, ordering assertion.
-- **Pool teardown is global.** `after-env-setup.ts` closes the pool in `afterAll`; specs
-  don't manage it.
-
-- **Run it under the pinned Node.** The suite needs Node >= 26 and Docker running. If the
-  shell's default `node` is older, `npm install` fails and `npm test` reports
-  `jest: command not found` — a misleading error with an unrelated cause. Run `nvm use`
-  first (`.nvmrc` pins `v26.8.1`). Worktrees start without `node_modules`.
+- **Real Postgres, no mocks.** Testcontainers starts a `postgres:16-alpine` per spec file, runs migrations, injects `DATABASE_*` env vars.
+- **Flat directory.** Specs go directly in `backend/test/`. A spec in a subdirectory silently does not run.
+- **Supertest against the app.** Reference: `backend/test/test-foo-create.spec.ts`.
+- **Pool teardown is global.** `after-env-setup.ts` handles it in `afterAll`.
 
 ```bash
-cd backend && nvm use && npm install && npm test
+cd backend && npm test
 ```
 
-## Conventions that bite
+## What doesn't exist yet
 
-- **The browser never calls Express.** Everything goes through `frontend/src/server-actions/`,
-  which keeps `BACKEND_URL` server-side. That is why this repo has **no CORS configuration
-  anywhere** — a client-side `fetch` to port 4000 would silently require it.
-- **Server actions return result unions, they don't throw.** Components render the failure
-  branch; nothing uses error boundaries. See `ListFoosResult` / `CreateFooResult`.
-- **The DAL is the only module that imports `db`.** Routes import the DAL.
-- **Deterministic ordering.** `findALL` sorts `created_at DESC, id DESC`. The `id` tiebreak
-  is deliberate — rows sharing a timestamp would otherwise shuffle between queries, and the
-  tests assert on the order.
-- **Pinned `Intl` formatting.** `FooTable.tsx` pins locale *and* timezone so server and
-  client render identical text. Defaulting either causes a hydration mismatch. Any new date
-  rendering must do the same.
-- **Every export from a `'use server'` module is a public endpoint.** Don't export helpers
-  from `frontend/src/server-actions/`.
-- **Request bodies are typed `any`, then validated at runtime.** `CLAUDE.md` prescribes this:
-  the compile-time type is a lie about untrusted input, so `CreateFooBody.name` is `any` and
-  `backend/src/api/foo.ts` hand-checks it. Copy that shape; don't "fix" it to a strict type.
-  The no-`any` rule applies to component props, not request bodies.
-- **Env is loaded by the first import in `backend/src/index.ts`.** `import 'dotenv/config'`
-  sits above `./app` on purpose: `app.ts` transitively imports `database/db.ts`, which reads
-  `DATABASE_*` and builds the pool **at import time**. Any `dotenv.config()` call in the
-  module body runs too late to matter. New env vars must be read after that import, not
-  before.
-- **Backend defaults to port 4000, frontend to 3000.** `PORT` falls back to 4000 in
-  `index.ts`, matching `.env.example`, `dev.sh` and the READMEs. Don't reintroduce a 3000
-  fallback — with no `.env` present it makes the backend race Next for the same port.
-- **Filenames: PascalCase for React components, kebab-case everywhere else.**
-  `FooTable.tsx` and `HelloWorldDashboard.tsx` against `test-environment.ts`,
-  `health-check.ts`. Follow the local convention of the directory you're adding to.
+The first feature that needs one of these creates it:
 
-## Seams not yet established
-
-The first feature that needs one of these decides its shape:
-
-- **No service layer.** `CLAUDE.md` refers to unit-testing "complicated business logic in
-  services", but `backend/src/services/` does not exist. Logic currently sits in the route.
-- **No auth, sessions, or users.** Middleware is `express.json()` and `morgan` only.
-- **No validation library.** `backend/src/api/foo.ts` hand-rolls its checks.
-- **No CI.** No `.github/`. `npm test`, `npm run typecheck`, and `npm run format:check`
-  are manual, per app. All three are currently green in both apps, so they are usable as a
-  gate as-is — wiring them up needs no cleanup first.
-- **No `.artifacts/issues/` and no `docs/adr/`**, though `docs/agents/` describes both. Created on
-  first use.
+- No service layer — logic sits in the route handlers
+- No auth, sessions, or users
+- No validation library — checks are hand-rolled
+- No CI
+- Single page (`frontend/src/app/page.tsx` renders everything)
 
 ## Known drift
 
-Recorded so sessions stop rediscovering it. Not currently scheduled for a fix.
-
-- The `BACKEND_URL` fallback `?? 'http://localhost:4000'` is duplicated across both files
-  in `frontend/src/server-actions/`.
-- The error handler in `backend/src/app.ts` returns `err.stack` in the 500 response body.
-  **Deliberate** — this is a scaffold, and the traces are useful while wiring up a slice.
-  It is the one thing here that must not survive into anything public-facing.
+- `BACKEND_URL` fallback `?? 'http://localhost:4000'` is duplicated across server action files.
+- The error handler in `backend/src/app.ts` returns `err.stack` in the 500 body. Deliberate for this scaffold — must not survive into anything public-facing.
