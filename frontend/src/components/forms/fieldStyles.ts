@@ -1,20 +1,8 @@
 /**
- * Shared class lists for the field components.
- *
- * Each control pairs a @tailwindcss/forms class (`form-input`, `form-select`, …)
- * with these utilities. The plugin class carries structure only — appearance reset,
- * consistent padding, the checkbox checkmark and select chevron SVGs — and hardcodes
- * a white background that the utilities below repaint. Both sit in Tailwind's
- * `utilities` layer, and the plugin's classes are emitted first, so the utilities
- * win the specificity tie.
- *
- * That same tie is why the valid and invalid variants are mutually exclusive rather
- * than layered: `border-edge` and `border-danger` have equal specificity, so listing
- * both would let emission order pick the winner regardless of the order they appear
- * in `className`. Never put two utilities for the same property on one control.
+ * Valid and invalid border variants are mutually exclusive — `border-edge` and
+ * `border-danger` share specificity, so only one may appear on a control.
  */
 
-/** Structure and the colors that do not vary with validity. */
 const TEXT_BASE =
   'w-full rounded-md bg-elevated text-ink placeholder:text-muted ' +
   'disabled:cursor-not-allowed disabled:opacity-50';
