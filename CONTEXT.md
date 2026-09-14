@@ -131,6 +131,8 @@ cd frontend && npm test
 - **Supertest against the app.** Reference: `backend/test/test-foo-create.spec.ts`.
 - **Pool teardown is global.** `after-env-setup.ts` handles it in `afterAll`.
 
+- **Agents: use watch mode during a TDD loop.** One-shot `npx jest <file>` boots and stops a container every call (~5s of overhead per run). Instead start `cd backend && npm run test:watch` once as a background Bash task, then after each edit read its output; Jest re-runs the affected specs on save against the warm container. Stop the background task when the loop is done.
+
 ```bash
 cd backend && npm test
 ```
