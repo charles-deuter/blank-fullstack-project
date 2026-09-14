@@ -115,6 +115,8 @@ The theme is dark-only. `color-scheme: dark` is set on `:root`. `@tailwindcss/fo
 
 Jest + `@swc/jest` + Testing Library. Tests live colocated in `__tests__/` directories next to the code they test.
 
+- **Typecheck while iterating with `npm run typecheck:fast`** (`tsc --noEmit` only). The full `npm run typecheck` runs `next typegen` first, which costs ~10s and is only needed when a route file was added or removed — run it once as the final gate.
+
 - **Form kit specs.** `frontend/src/components/forms/__tests__/` covers all five field components — rendering, error states, aria attributes, and prop forwarding.
 - **`testMatch` covers `.test.ts` and `.test.tsx`.** Non-JSX modules (for example under `src/lib/`) get a plain `.test.ts` spec in a colocated `__tests__/` directory.
 - **Headless UI.** `jest.setup.ts` polyfills `ResizeObserver` for jsdom. Headless UI's `ListboxButton` overrides `aria-describedby`, so ListboxField tests find the error element by `role="status"` instead of by ID.

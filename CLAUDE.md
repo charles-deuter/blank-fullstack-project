@@ -20,6 +20,10 @@ Read `CONTEXT.md` before exploring the codebase or spawning an Explore agent. It
 - Always disable forms upon submission 
 - Always use descriptive type names (TValue, TKey, etc) for generics except for when it is a simple expression that only uses a single clear generic
 
+## Working across packages
+
+`backend/` and `frontend/` share no code and no build. A feature that touches both is two parallel coding subagents, one per package, each following the `CONTEXT.md` recipe for its half against the agreed API contract (route paths, request/response shapes, error codes); the parent merges and runs the final verification. Do not build them serially in one agent.
+
 ## Agent skills
 
 ### Issue tracker
