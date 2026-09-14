@@ -17,7 +17,8 @@ Read `CONTEXT.md` before exploring the codebase or spawning an Explore agent. It
 - When testing backend components default to using supertest for simple tests, however complicated business logic in
   services can be unit tested directly
 - Frontend validations give a seamless user experience and prevent unnecessary requests we already know will fail. Don’t wait on the backend to do simple validations that can be done with the data readily available on the frontend. Trigger validation messages on blur or on form submit. Feedback style should be inline form field validations.
-- Always disable forms upon submition 
+- Always disable forms upon submission 
+- Always use descriptive type names (TValue, TKey, etc) for generics except for when it is a simple expression that only uses a single clear generic
 
 ## Agent skills
 
