@@ -5,7 +5,10 @@ import type { InputHTMLAttributes } from 'react';
 import FieldError from './FieldError';
 import { formCheckboxClasses } from './fieldStyles';
 
-type CheckboxFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'type' | 'value'> & {
+type CheckboxFieldProps = Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'id' | 'type' | 'value'
+> & {
   label: string;
   error?: string | null;
   onValueChange?: (checked: boolean) => void;

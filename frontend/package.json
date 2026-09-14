@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "format": "npx prettier --write .",
     "format:check": "npx prettier --check .",
     "test": "jest --passWithNoTests"
