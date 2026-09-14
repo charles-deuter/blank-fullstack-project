@@ -77,15 +77,10 @@ export default function ListboxField({
 
           <ListboxOptions
             transition
-            style={{
-              transitionProperty: 'opacity',
-              transitionDuration: '150ms',
-              transitionTimingFunction: 'ease-out',
-            }}
             className={
               'absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md py-1 ' +
               'bg-elevated border border-edge shadow-lg ' +
-              'data-[closed]:opacity-0'
+              'transition-opacity duration-150 ease-out data-[closed]:opacity-0'
             }
           >
             {options.map((option) => (
