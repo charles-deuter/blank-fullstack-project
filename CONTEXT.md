@@ -34,20 +34,30 @@ Follow this order. Each step lists the file to create and what goes in it.
 5. **DAL** — `backend/src/database/dal/<entity>.ts`
    Copy `dal/foo.ts`. This is the only code that imports `db`. Always sort with a tiebreak column (`created_at DESC, id DESC`).
 
-6. **Route** — `backend/src/api/<entity>.ts`
+6. **Service (only when needed)** — `backend/src/services/<entity>.ts`
+   Skip this for simple CRUD; the route calls the DAL directly, as `foo` does. Create a service when one request writes more than one table, or the calculation is worth unit-testing on its own. The service:
+   - runs the whole write inside `db.transaction()` via a `withTransaction(fn)` wrapper exported from the DAL, so the DAL stays the only importer of `db`;
+   - passes the transaction handle into DAL functions (give them an `executor` parameter that defaults to `db`);
+   - locks rows it will update with `SELECT ... FOR UPDATE`, in a fixed order (by id) so concurrent calls cannot deadlock;
+   - throws a typed error (`class <Entity>Error extends Error { code: '...' }`) for business failures. The route maps codes to status (`NOT_FOUND` → 404, everything else → 400) and passes anything else to `next(err)`.
+   Pure calculation helpers (no DB) go in their own module under `services/` so they can be tested without fixtures.
+
+7. **Route** — `backend/src/api/<entity>.ts`
    Copy `api/foo.ts`. Body type fields are `any`, validated at runtime (not compile time — this is a CLAUDE.md rule). Route catches errors with `next(err)`.
 
-7. **Mount** — `backend/src/api/router.ts`
+8. **Mount** — `backend/src/api/router.ts`
    Add `router.use('/<entity>', <entity>)`.
 
-8. **Server action** — `frontend/src/server-actions/<entity>.ts`
+9. **Server action** — `frontend/src/server-actions/<entity>.ts`
    Copy `server-actions/foo.ts`. Fetches `BACKEND_URL` (server-side only). Returns a result union: `{ ok: true, ... } | { ok: false, message: string }`. Never throws. Every export from this file is a public endpoint — don't export helpers.
 
-9. **Server component** — `frontend/src/components/<Entity>Panel.tsx`
-   Copy `FooPanel.tsx`. Calls the server action and passes the result as props to the client component.
+10. **Server component** — `frontend/src/components/<Entity>Panel.tsx`
+    Copy `FooPanel.tsx`. Calls the server action and passes the result as props to the client component.
 
-10. **Client component** — `frontend/src/components/<Entity>Table.tsx` (or whatever UI)
-    `'use client'`. Receives data as props from the server component. Uses the form kit (below) for any inputs.
+11. **Client component** — `frontend/src/components/<Entity>Table.tsx` (or whatever UI)
+    `'use client'`. Receives data as props from the server component. Uses the form kit (below) for any inputs. After a mutation, re-fetch through the server action rather than patching local state, so the server stays the source of truth for ordering (see `FooTable.tsx`).
+
+Seed data belongs in a custom migration (`cd backend && npx drizzle-kit generate --custom --name=seed-<entity>`, then write the SQL by hand). Migrations run in every test container too, so seeded rows are present in every backend spec — reset them in `beforeEach` when a spec mutates them.
 
 ## Form kit
 
@@ -106,6 +116,7 @@ The theme is dark-only. `color-scheme: dark` is set on `:root`. `@tailwindcss/fo
 Jest + `@swc/jest` + Testing Library. Tests live colocated in `__tests__/` directories next to the code they test.
 
 - **Form kit specs.** `frontend/src/components/forms/__tests__/` covers all five field components — rendering, error states, aria attributes, and prop forwarding.
+- **`testMatch` covers `.test.ts` and `.test.tsx`.** Non-JSX modules (for example under `src/lib/`) get a plain `.test.ts` spec in a colocated `__tests__/` directory.
 - **Headless UI.** `jest.setup.ts` polyfills `ResizeObserver` for jsdom. Headless UI's `ListboxButton` overrides `aria-describedby`, so ListboxField tests find the error element by `role="status"` instead of by ID.
 
 ```bash
@@ -115,7 +126,8 @@ cd frontend && npm test
 ### Backend
 
 - **Real Postgres, no mocks.** Testcontainers starts a `postgres:16-alpine` per spec file, runs migrations, injects `DATABASE_*` env vars.
-- **Flat directory.** Specs go directly in `backend/test/`. A spec in a subdirectory silently does not run.
+- **Flat directory.** Specs go directly in `backend/test/`. A spec in a subdirectory silently does not run, and a helper file in `backend/test/` is run as a spec and fails. Shared fixtures go inline in the spec, or in a new `backend/test-helpers/` directory outside `testMatch`.
+- **Every spec gets migrations, including seeds.** A pure-logic spec still boots a container; that is fine, just expect ~2s of startup per file.
 - **Supertest against the app.** Reference: `backend/test/test-foo-create.spec.ts`.
 - **Pool teardown is global.** `after-env-setup.ts` handles it in `afterAll`.
 
@@ -127,7 +139,7 @@ cd backend && npm test
 
 The first feature that needs one of these creates it:
 
-- No service layer — logic sits in the route handlers
+- No service layer — logic sits in the route handlers. Step 6 above says where one goes and how it is shaped when a feature needs it
 - No auth, sessions, or users
 - No validation library — checks are hand-rolled
 - No CI

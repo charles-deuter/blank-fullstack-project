@@ -1,5 +1,9 @@
 # Project Overview: Blank Fullstack Web App Project
 
+## Start here
+
+Read `CONTEXT.md` before exploring the codebase or spawning an Explore agent. It is the complete, authoritative map: stack, the `foo` reference slice, the step-by-step recipe for a new feature, every convention, and the test setup. Explore only for things it does not cover. If you find it wrong or incomplete, fix it in the same change.
+
 ## Tech Stack
 - **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS
 - **Backend:** Node.js, Express, Drizzle Orm, Typescript
@@ -27,4 +31,4 @@ Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `
 
 ### Domain docs
 
-Single-context repo — one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Single-context repo — one `CONTEXT.md` at the repo root. ADRs go in `docs/adr/` (no ADRs written yet; the first one creates the directory). See `docs/agents/domain.md`.

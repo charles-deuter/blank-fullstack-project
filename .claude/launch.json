@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "fullstack",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-lc", "env -u PORT ./dev.sh"],
+      "port": 3000
+    },
+    {
       "name": "frontend",
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-lc", "npm --prefix frontend run dev"],

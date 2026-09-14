@@ -16,7 +16,7 @@ const config: Config = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  testMatch: ['**/__tests__/**/*.test.tsx'],
+  testMatch: ['**/__tests__/**/*.test.{ts,tsx}'],
   setupFiles: ['<rootDir>/jest.setup.ts'],
 };
 

@@ -9,7 +9,7 @@ const required = (value: unknown) => (value ? null : 'Required');
 describe('Form', () => {
   it('renders children with field objects', () => {
     render(
-      <Form initialValues={{ name: '' }} onSubmit={() => null}>
+      <Form initialValues={{ name: '' }} onSubmit={async () => null}>
         {(fields) => <TextField {...fields.name} label="Name" />}
       </Form>,
     );
@@ -18,7 +18,7 @@ describe('Form', () => {
 
   it('tracks field value on change', () => {
     render(
-      <Form initialValues={{ name: '' }} onSubmit={() => null}>
+      <Form initialValues={{ name: '' }} onSubmit={async () => null}>
         {(fields) => <TextField {...fields.name} label="Name" />}
       </Form>,
     );
@@ -31,7 +31,7 @@ describe('Form', () => {
       <Form
         initialValues={{ name: '' }}
         validationRules={{ name: required }}
-        onSubmit={() => null}
+        onSubmit={async () => null}
       >
         {(fields) => <TextField {...fields.name} label="Name" />}
       </Form>,
@@ -45,7 +45,7 @@ describe('Form', () => {
       <Form
         initialValues={{ name: '' }}
         validationRules={{ name: required }}
-        onSubmit={() => null}
+        onSubmit={async () => null}
       >
         {(fields) => <TextField {...fields.name} label="Name" />}
       </Form>,
@@ -77,7 +77,7 @@ describe('Form', () => {
   });
 
   it('calls onSubmit with current values when valid', async () => {
-    const handleSubmit = jest.fn(() => null);
+    const handleSubmit = jest.fn(async () => null);
     render(
       <Form
         initialValues={{ name: '' }}
@@ -103,7 +103,7 @@ describe('Form', () => {
     render(
       <Form
         initialValues={{ name: '' }}
-        onSubmit={() => null}
+        onSubmit={async () => null}
       >
         {(fields) => (
           <>
@@ -145,7 +145,7 @@ describe('Form', () => {
 
   it('sets formError when onSubmit returns a string', async () => {
     render(
-      <Form initialValues={{ name: '' }} onSubmit={() => 'Server error'}>
+      <Form initialValues={{ name: '' }} onSubmit={async () => 'Server error'}>
         {(fields, { formError }) => (
           <>
             <TextField {...fields.name} label="Name" />
@@ -168,7 +168,7 @@ describe('Form', () => {
       <Form
         initialValues={{ name: '' }}
         validationRules={{ name: required }}
-        onSubmit={() => { callCount++; return callCount === 1 ? 'Error' : null; }}
+        onSubmit={async () => { callCount++; return callCount === 1 ? 'Error' : null; }}
       >
         {(fields) => (
           <>
@@ -193,7 +193,7 @@ describe('Form', () => {
 
   it('handles boolean fields with checked/onChange', () => {
     render(
-      <Form initialValues={{ agree: false }} onSubmit={() => null}>
+      <Form initialValues={{ agree: false }} onSubmit={async () => null}>
         {(fields) => <CheckboxField {...fields.agree} label="Agree" />}
       </Form>,
     );
@@ -206,7 +206,7 @@ describe('Form', () => {
   it('onValueChange updates form state', () => {
     let onValueChange: (value: string) => void;
     render(
-      <Form initialValues={{ color: '' }} onSubmit={() => null}>
+      <Form initialValues={{ color: '' }} onSubmit={async () => null}>
         {(fields) => {
           onValueChange = fields.color.onValueChange;
           return <input data-testid="proxy" value={fields.color.value} readOnly />;
@@ -219,7 +219,7 @@ describe('Form', () => {
 
   it('exposes reset in metadata for manual reset', async () => {
     render(
-      <Form initialValues={{ name: '' }} onSubmit={() => 'Error'}>
+      <Form initialValues={{ name: '' }} onSubmit={async () => 'Error'}>
         {(fields, { reset }) => (
           <>
             <TextField {...fields.name} label="Name" />
@@ -242,7 +242,7 @@ describe('Form', () => {
       <Form
         initialValues={{ password: '', confirm: '' }}
         validationRules={{ confirm: matchPassword }}
-        onSubmit={() => null}
+        onSubmit={async () => null}
       >
         {(fields) => (
           <>
