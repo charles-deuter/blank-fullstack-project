@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "jest",
+    "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
     "start": "npx tsx ./src/index.ts",
     "db:push": "npx drizzle-kit push",

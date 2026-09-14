@@ -2,22 +2,27 @@ import { randomUUID } from 'node:crypto';
 import { Client } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
-import { postgresContainer } from './test-container';
 
 const NodeEnvironment = require('jest-environment-node').TestEnvironment;
 
-// Each spec file gets its own freshly migrated database on the shared container.
+// Each spec file gets its own freshly migrated database on the container that
+// test-global-setup.ts started.
 class PostgresEnvironment extends NodeEnvironment {
   async setup() {
     await super.setup();
 
-    this.container = await postgresContainer().start();
-    this.adminUri = this.container.getConnectionUri();
+    const adminUri = process.env.TEST_PG_URI;
+    if (!adminUri) {
+      throw new Error(
+        'TEST_PG_URI is not set; is globalSetup configured in jest.config.ts?',
+      );
+    }
+    this.adminUri = adminUri;
     this.dbName = `test_${randomUUID().replace(/-/g, '')}`;
 
     await this.runAsAdmin(`CREATE DATABASE "${this.dbName}"`);
 
-    const dbUri = new URL(this.adminUri);
+    const dbUri = new URL(adminUri);
     dbUri.pathname = `/${this.dbName}`;
 
     const client = new Client({ connectionString: dbUri.toString() });
@@ -31,16 +36,16 @@ class PostgresEnvironment extends NodeEnvironment {
       await client.end();
     }
 
-    this.global.process.env.DATABASE_HOST = this.container.getHost();
-    this.global.process.env.DATABASE_PORT = this.container.getPort().toString();
+    this.global.process.env.DATABASE_HOST = dbUri.hostname;
+    this.global.process.env.DATABASE_PORT = dbUri.port;
     this.global.process.env.DATABASE_NAME = this.dbName;
-    this.global.process.env.DATABASE_USER = this.container.getUsername();
-    this.global.process.env.DATABASE_PASSWORD = this.container.getPassword();
+    this.global.process.env.DATABASE_USER = decodeURIComponent(dbUri.username);
+    this.global.process.env.DATABASE_PASSWORD = decodeURIComponent(dbUri.password);
   }
 
   async teardown() {
     if (this.dbName) {
-      // FORCE closes any straggling connections; the container itself stays up for reuse.
+      // FORCE closes any straggling connections so the drop cannot hang.
       await this.runAsAdmin(`DROP DATABASE IF EXISTS "${this.dbName}" WITH (FORCE)`);
     }
 

@@ -7,6 +7,7 @@ const config: Config.InitialOptions = {
   },
   testMatch: ['<rootDir>/test/*'],
   globalSetup: '<rootDir>/test-global-setup.ts',
+  globalTeardown: '<rootDir>/test-global-teardown.ts',
   testEnvironment: '<rootDir>/test-environment.ts',
   setupFilesAfterEnv: ['<rootDir>/after-env-setup.ts'],
 };
