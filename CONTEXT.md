@@ -17,7 +17,7 @@ One worked vertical slice — the `foo` entity — is wired end to end from Post
 
 ## How to add a feature
 
-Follow this order. Each step lists the file to create and what goes in it.
+Follow this order. Each step lists the file to create and what goes in it. Steps 1, 2, 5, 7–11 are boilerplate copied from `foo`: stamp them all at once with `node .claude/skills/new-entity/scaffold.mjs <kebab-name>` (see `.claude/skills/new-entity/SKILL.md`), then edit the model before step 3.
 
 1. **Model** — `backend/src/database/models/<entity>.ts`
    Copy `models/foo.ts`. Define a `pgTable` and export a `$inferInsert` type.
