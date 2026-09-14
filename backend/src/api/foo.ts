@@ -3,6 +3,13 @@ import * as foo from '../database/dal/foo';
 
 const fooRouter = express.Router();
 
+const ERRORS = {
+  NAME_INVALID: {
+    code: 'FOO_NAME_INVALID',
+    message: 'name is required and must be a non-empty string',
+  },
+} as const;
+
 const fooController: RequestHandler = async (req, res, next) => {
   try {
     const result = await foo.findALL();
@@ -26,9 +33,7 @@ const createFooController: RequestHandler = async (
     const { name } = req.body ?? {};
 
     if (typeof name !== 'string' || name.trim() === '') {
-      return res.status(400).json({
-        message: 'name is required and must be a non-empty string',
-      });
+      return res.status(400).json(ERRORS.NAME_INVALID);
     }
 
     const created = await foo.create(name.trim());

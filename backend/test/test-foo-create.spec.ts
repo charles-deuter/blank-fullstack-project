@@ -33,11 +33,14 @@ describe('POST /api/foo', () => {
     ['an empty name', { name: '' }],
     ['a whitespace-only name', { name: '   ' }],
     ['a non-string name', { name: 42 }],
-  ])('should return 400 for %s', async (_label, body) => {
+  ])('should return the same 400 error for %s', async (_label, body) => {
     const response = await request(app).post('/api/foo').send(body);
 
     expect(response.statusCode).toBe(400);
-    expect(response.body.message).toEqual(expect.any(String));
+    expect(response.body).toEqual({
+      code: 'FOO_NAME_INVALID',
+      message: 'name is required and must be a non-empty string',
+    });
   });
 
   it('should return the most recently created record first', async () => {
