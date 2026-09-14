@@ -203,17 +203,17 @@ describe('Form', () => {
     expect(checkbox).toBeChecked();
   });
 
-  it('handles value-based onChange for ListboxField pattern', () => {
-    let colorOnChange: (value: string) => void;
+  it('onValueChange updates form state', () => {
+    let onValueChange: (value: string) => void;
     render(
       <Form initialValues={{ color: '' }} onSubmit={() => null}>
         {(fields) => {
-          colorOnChange = fields.color.onChange as unknown as (value: string) => void;
+          onValueChange = fields.color.onValueChange;
           return <input data-testid="proxy" value={fields.color.value} readOnly />;
         }}
       </Form>,
     );
-    act(() => { colorOnChange!('blue'); });
+    act(() => { onValueChange!('blue'); });
     expect(screen.getByTestId('proxy')).toHaveValue('blue');
   });
 

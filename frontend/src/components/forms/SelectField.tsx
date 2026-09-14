@@ -8,7 +8,7 @@ import { formSelectClasses } from './fieldStyles';
 type SelectFieldProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, 'id'> & {
   label: string;
   error?: string | null;
-  /** The <option> elements. */
+  onValueChange?: (value: string) => void;
   children: ReactNode;
 };
 
@@ -17,6 +17,7 @@ export default function SelectField({
   error,
   className,
   children,
+  onValueChange,
   ...selectProps
 }: SelectFieldProps) {
   const controlId = useId();
@@ -27,6 +28,10 @@ export default function SelectField({
       <select
         {...selectProps}
         id={controlId}
+        onChange={(e) => {
+          onValueChange?.(e.target.value);
+          selectProps.onChange?.(e);
+        }}
         aria-invalid={error ? true : undefined}
         aria-describedby={errorId}
         className={formSelectClasses(Boolean(error), className)}

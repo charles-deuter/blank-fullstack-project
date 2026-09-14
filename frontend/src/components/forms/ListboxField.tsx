@@ -16,6 +16,7 @@ type ListboxFieldProps = {
   options: ListboxFieldOption[];
   value?: string;
   onChange?: (value: string) => void;
+  onValueChange?: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
   name?: string;
@@ -40,11 +41,13 @@ export default function ListboxField({
   options,
   value,
   onChange,
+  onValueChange,
   placeholder = 'Select an option',
   disabled = false,
   name,
   className,
 }: ListboxFieldProps) {
+  const handleChange = onValueChange ?? onChange;
   const controlId = useId();
   const errorId = `${controlId}-error`;
 
@@ -54,7 +57,7 @@ export default function ListboxField({
     <FieldWrapper controlId={controlId} errorId={errorId} label={label} error={error}>
       <Listbox
         value={value ?? ''}
-        onChange={onChange}
+        onChange={handleChange}
         disabled={disabled}
         name={name}
         invalid={Boolean(error)}

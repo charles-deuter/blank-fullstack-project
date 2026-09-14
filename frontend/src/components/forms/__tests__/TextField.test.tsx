@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import TextField from '../TextField';
 
@@ -39,5 +39,12 @@ describe('TextField', () => {
   it('forwards name prop', () => {
     render(<TextField label="Email" name="email" />);
     expect(screen.getByLabelText('Email')).toHaveAttribute('name', 'email');
+  });
+
+  it('calls onValueChange with the input value', () => {
+    const handleValueChange = jest.fn();
+    render(<TextField label="Email" onValueChange={handleValueChange} />);
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'alice@test.com' } });
+    expect(handleValueChange).toHaveBeenCalledWith('alice@test.com');
   });
 });

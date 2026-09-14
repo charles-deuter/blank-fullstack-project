@@ -11,9 +11,9 @@ type TextInputType =
 
 type TextFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'type'> & {
   label: string;
-  /** Validation message. Sets aria-invalid and the danger border when present. */
   error?: string | null;
   type?: TextInputType;
+  onValueChange?: (value: string) => void;
 };
 
 export default function TextField({
@@ -21,6 +21,7 @@ export default function TextField({
   error,
   type = 'text',
   className,
+  onValueChange,
   ...inputProps
 }: TextFieldProps) {
   const controlId = useId();
@@ -32,6 +33,10 @@ export default function TextField({
         {...inputProps}
         id={controlId}
         type={type}
+        onChange={(e) => {
+          onValueChange?.(e.target.value);
+          inputProps.onChange?.(e);
+        }}
         aria-invalid={error ? true : undefined}
         aria-describedby={errorId}
         className={formInputClasses(Boolean(error), className)}

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import TextAreaField from '../TextAreaField';
 
@@ -39,5 +39,12 @@ describe('TextAreaField', () => {
   it('forwards rows prop overriding the default', () => {
     render(<TextAreaField label="Bio" rows={8} />);
     expect(screen.getByLabelText('Bio')).toHaveAttribute('rows', '8');
+  });
+
+  it('calls onValueChange with the textarea value', () => {
+    const handleValueChange = jest.fn();
+    render(<TextAreaField label="Bio" onValueChange={handleValueChange} />);
+    fireEvent.change(screen.getByLabelText('Bio'), { target: { value: 'Hello' } });
+    expect(handleValueChange).toHaveBeenCalledWith('Hello');
   });
 });

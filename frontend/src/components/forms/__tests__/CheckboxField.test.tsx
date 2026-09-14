@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import CheckboxField from '../CheckboxField';
 
@@ -39,5 +39,17 @@ describe('CheckboxField', () => {
   it('forwards name prop', () => {
     render(<CheckboxField label="Agree to terms" name="terms" />);
     expect(screen.getByLabelText('Agree to terms')).toHaveAttribute('name', 'terms');
+  });
+
+  it('calls onValueChange with checked state', () => {
+    const handleValueChange = jest.fn();
+    render(<CheckboxField label="Agree to terms" onValueChange={handleValueChange} />);
+    fireEvent.click(screen.getByLabelText('Agree to terms'));
+    expect(handleValueChange).toHaveBeenCalledWith(true);
+  });
+
+  it('uses value prop as checked when boolean', () => {
+    render(<CheckboxField label="Agree to terms" value={true} onChange={() => {}} />);
+    expect(screen.getByLabelText('Agree to terms')).toBeChecked();
   });
 });
