@@ -99,7 +99,7 @@ export default function Form<TValues extends Record<string, unknown>>({
   const fields = {} as { [TKey in keyof TValues]: FormField<TValues[TKey]> };
 
   for (const key of Object.keys(initialValues)) {
-    const fieldError = (submitted || touched.has(key)) ? (errors[key] ?? null) : null;
+    const fieldError = submitted || touched.has(key) ? (errors[key] ?? null) : null;
 
     (fields as Record<string, FormField<unknown>>)[key] = {
       value: values[key],

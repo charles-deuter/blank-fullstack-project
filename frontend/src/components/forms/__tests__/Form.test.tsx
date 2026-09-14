@@ -101,10 +101,7 @@ describe('Form', () => {
 
   it('resets to initialValues after successful submit', async () => {
     render(
-      <Form
-        initialValues={{ name: '' }}
-        onSubmit={async () => null}
-      >
+      <Form initialValues={{ name: '' }} onSubmit={async () => null}>
         {(fields) => (
           <>
             <TextField {...fields.name} label="Name" />
@@ -122,7 +119,9 @@ describe('Form', () => {
 
   it('disables fields during async submit', async () => {
     let resolveSubmit: (v: null) => void;
-    const submitPromise = new Promise<null>((r) => { resolveSubmit = r; });
+    const submitPromise = new Promise<null>((r) => {
+      resolveSubmit = r;
+    });
 
     render(
       <Form initialValues={{ name: '' }} onSubmit={() => submitPromise}>
@@ -139,7 +138,9 @@ describe('Form', () => {
       expect(screen.getByLabelText('Name')).toBeDisabled();
     });
 
-    await act(async () => { resolveSubmit!(null); });
+    await act(async () => {
+      resolveSubmit!(null);
+    });
     expect(screen.getByLabelText('Name')).not.toBeDisabled();
   });
 
@@ -168,7 +169,10 @@ describe('Form', () => {
       <Form
         initialValues={{ name: '' }}
         validationRules={{ name: required }}
-        onSubmit={async () => { callCount++; return callCount === 1 ? 'Error' : null; }}
+        onSubmit={async () => {
+          callCount++;
+          return callCount === 1 ? 'Error' : null;
+        }}
       >
         {(fields) => (
           <>
@@ -213,7 +217,9 @@ describe('Form', () => {
         }}
       </Form>,
     );
-    act(() => { onValueChange!('blue'); });
+    act(() => {
+      onValueChange!('blue');
+    });
     expect(screen.getByTestId('proxy')).toHaveValue('blue');
   });
 
@@ -223,7 +229,9 @@ describe('Form', () => {
         {(fields, { reset }) => (
           <>
             <TextField {...fields.name} label="Name" />
-            <button type="button" onClick={reset}>Reset</button>
+            <button type="button" onClick={reset}>
+              Reset
+            </button>
             <button type="submit">Save</button>
           </>
         )}

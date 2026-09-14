@@ -44,7 +44,9 @@ describe('TextField', () => {
   it('calls onValueChange with the input value', () => {
     const handleValueChange = jest.fn();
     render(<TextField label="Email" onValueChange={handleValueChange} />);
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'alice@test.com' } });
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'alice@test.com' },
+    });
     expect(handleValueChange).toHaveBeenCalledWith('alice@test.com');
   });
 });
