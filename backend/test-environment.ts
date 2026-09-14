@@ -1,60 +1,60 @@
+import { randomUUID } from 'node:crypto';
 import { Client } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { postgresContainer } from './test-container';
 
 const NodeEnvironment = require('jest-environment-node').TestEnvironment;
-const { PostgreSqlContainer } = require('@testcontainers/postgresql');
 
+// Each spec file gets its own freshly migrated database on the shared container.
 class PostgresEnvironment extends NodeEnvironment {
   async setup() {
     await super.setup();
 
-    this.container = await new PostgreSqlContainer('postgres:16-alpine')
-      .withDatabase('test_db')
-      .withUsername('test_user')
-      .withPassword('test_password')
-      .start();
+    this.container = await postgresContainer().start();
+    this.adminUri = this.container.getConnectionUri();
+    this.dbName = `test_${randomUUID().replace(/-/g, '')}`;
 
-    const host = this.container.getHost();
-    const port = this.container.getPort();
-    const dbname = this.container.getDatabase();
-    const username = this.container.getUsername();
-    const password = this.container.getPassword();
+    await this.runAsAdmin(`CREATE DATABASE "${this.dbName}"`);
 
-    const client = new Client({
-      connectionString: this.container.getConnectionUri(),
-    });
+    const dbUri = new URL(this.adminUri);
+    dbUri.pathname = `/${this.dbName}`;
+
+    const client = new Client({ connectionString: dbUri.toString() });
     await client.connect();
-
-    const db = drizzle(client);
     try {
-      await migrate(db, {
-        migrationsFolder: './migrations',
-      });
+      await migrate(drizzle(client), { migrationsFolder: './migrations' });
     } catch (error) {
-      if (error instanceof Error) {
-        console.log(error.message);
-      } else {
-        console.log('Unexpected error type:', error);
-      }
-
+      console.log(error instanceof Error ? error.message : error);
       throw new Error('Unable to apply migrations');
+    } finally {
+      await client.end();
     }
-    await client.end();
 
-    this.global.process.env.DATABASE_HOST = host;
-    this.global.process.env.DATABASE_PORT = port.toString();
-    this.global.process.env.DATABASE_NAME = dbname;
-    this.global.process.env.DATABASE_USER = username;
-    this.global.process.env.DATABASE_PASSWORD = password;
+    this.global.process.env.DATABASE_HOST = this.container.getHost();
+    this.global.process.env.DATABASE_PORT = this.container.getPort().toString();
+    this.global.process.env.DATABASE_NAME = this.dbName;
+    this.global.process.env.DATABASE_USER = this.container.getUsername();
+    this.global.process.env.DATABASE_PASSWORD = this.container.getPassword();
   }
 
   async teardown() {
-    if (this.container) {
-      await this.container.stop();
+    if (this.dbName) {
+      // FORCE closes any straggling connections; the container itself stays up for reuse.
+      await this.runAsAdmin(`DROP DATABASE IF EXISTS "${this.dbName}" WITH (FORCE)`);
     }
 
     await super.teardown();
+  }
+
+  async runAsAdmin(statement: string) {
+    const admin = new Client({ connectionString: this.adminUri });
+    await admin.connect();
+    try {
+      await admin.query(statement);
+    } finally {
+      await admin.end();
+    }
   }
 }
 

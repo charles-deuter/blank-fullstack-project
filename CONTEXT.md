@@ -125,7 +125,7 @@ cd frontend && npm test
 
 ### Backend
 
-- **Real Postgres, no mocks.** Testcontainers starts a `postgres:16-alpine` per spec file, runs migrations, injects `DATABASE_*` env vars.
+- **Real Postgres, no mocks.** One reusable `postgres:16-alpine` container (`blank-fullstack-test-pg`) is started by `test-global-setup.ts` and left running between runs. `test-environment.ts` gives each spec file its own freshly migrated database on it and drops it afterwards, so isolation is per file but only the first run pays the container boot (~10s vs ~2.5s warm). If the container misbehaves, `docker rm -f blank-fullstack-test-pg` and rerun.
 - **Flat directory.** Specs go directly in `backend/test/`. A spec in a subdirectory silently does not run, and a helper file in `backend/test/` is run as a spec and fails. Shared fixtures go inline in the spec, or in a new `backend/test-helpers/` directory outside `testMatch`.
 - **Every spec gets migrations, including seeds.** A pure-logic spec still boots a container; that is fine, just expect ~2s of startup per file.
 - **Supertest against the app.** Reference: `backend/test/test-foo-create.spec.ts`.
