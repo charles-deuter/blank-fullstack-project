@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
+    "typecheck:fast": "tsc --noEmit",
     "format": "npx prettier --write .",
     "format:check": "npx prettier --check .",
     "test": "jest --passWithNoTests"
