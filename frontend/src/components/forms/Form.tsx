@@ -2,7 +2,14 @@
 
 import { type FormEvent, type ReactNode, useCallback, useState } from 'react';
 
-type ValidatorFn<T> = (value: unknown, allValues: T) => string | null;
+type FormField<TValue> = {
+  value: TValue;
+  onValueChange: (newValue: TValue) => void;
+  onBlur: () => void;
+  error: string | null;
+  name: string;
+  disabled: boolean;
+};
 
 type FormMeta = {
   isSubmitting: boolean;
@@ -10,44 +17,25 @@ type FormMeta = {
   reset: () => void;
 };
 
-type StringFieldProps = {
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> | string) => void;
-  onBlur: () => void;
-  error: string | null;
-  name: string;
-  disabled: boolean;
+type FormProps<TValues extends Record<string, unknown>> = {
+  initialValues: TValues;
+  validationRules?: Partial<
+    Record<keyof TValues, (value: unknown, allValues: TValues) => string | null>
+  >;
+  onSubmit: (values: TValues) => Promise<string | null | void>;
+  children: (
+    fields: { [TKey in keyof TValues]: FormField<TValues[TKey]> },
+    meta: FormMeta,
+  ) => ReactNode;
 };
 
-type BooleanFieldProps = {
-  checked: boolean;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onBlur: () => void;
-  error: string | null;
-  name: string;
-  disabled: boolean;
-};
-
-type FieldProps<V> = V extends boolean ? BooleanFieldProps : StringFieldProps;
-
-type FieldsOf<T> = {
-  [K in keyof T]: FieldProps<T[K]>;
-};
-
-type FormProps<T extends Record<string, unknown>> = {
-  initialValues: T;
-  validationRules?: Partial<Record<keyof T, ValidatorFn<T>>>;
-  onSubmit: (values: T) => Promise<string | null | undefined | void> | string | null | undefined | void;
-  children: (fields: FieldsOf<T>, meta: FormMeta) => ReactNode;
-};
-
-export default function Form<T extends Record<string, unknown>>({
+export default function Form<TValues extends Record<string, unknown>>({
   initialValues,
   validationRules,
   onSubmit,
   children,
-}: FormProps<T>) {
-  const [values, setValues] = useState<T>(initialValues);
+}: FormProps<TValues>) {
+  const [values, setValues] = useState<TValues>(initialValues);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [touched, setTouched] = useState<Set<string>>(new Set());
   const [submitted, setSubmitted] = useState(false);
@@ -55,7 +43,7 @@ export default function Form<T extends Record<string, unknown>>({
   const [formError, setFormError] = useState<string | null>(null);
 
   const validate = useCallback(
-    (name: keyof T, value: unknown, allValues: T): string | null => {
+    (name: string, value: unknown, allValues: TValues): string | null => {
       const rule = validationRules?.[name];
       if (!rule) return null;
       return rule(value, allValues);
@@ -64,10 +52,10 @@ export default function Form<T extends Record<string, unknown>>({
   );
 
   const validateAll = useCallback(
-    (currentValues: T): Record<string, string | null> => {
+    (currentValues: TValues): Record<string, string | null> => {
       const result: Record<string, string | null> = {};
       for (const key of Object.keys(currentValues)) {
-        result[key] = validate(key as keyof T, currentValues[key], currentValues);
+        result[key] = validate(key, currentValues[key], currentValues);
       }
       return result;
     },
@@ -98,7 +86,7 @@ export default function Form<T extends Record<string, unknown>>({
 
     try {
       const result = await onSubmit(values);
-      if (typeof result === 'string') {
+      if (result) {
         setFormError(result);
       } else {
         reset();
@@ -108,44 +96,25 @@ export default function Form<T extends Record<string, unknown>>({
     }
   };
 
-  const fields = {} as FieldsOf<T>;
+  const fields = {} as { [TKey in keyof TValues]: FormField<TValues[TKey]> };
 
-  for (const key of Object.keys(initialValues) as Array<keyof T & string>) {
-    const isBoolean = typeof initialValues[key] === 'boolean';
+  for (const key of Object.keys(initialValues)) {
     const fieldError = (submitted || touched.has(key)) ? (errors[key] ?? null) : null;
 
-    const onBlur = () => {
-      setTouched((prev) => new Set(prev).add(key));
-      const err = validate(key, values[key], values);
-      setErrors((prev) => ({ ...prev, [key]: err }));
+    (fields as Record<string, FormField<unknown>>)[key] = {
+      value: values[key],
+      onValueChange: (newValue: unknown) => {
+        setValues((prev) => ({ ...prev, [key]: newValue }));
+      },
+      onBlur: () => {
+        setTouched((prev) => new Set(prev).add(key));
+        const err = validate(key, values[key], values);
+        setErrors((prev) => ({ ...prev, [key]: err }));
+      },
+      error: fieldError,
+      name: key,
+      disabled: isSubmitting,
     };
-
-    if (isBoolean) {
-      (fields as Record<string, BooleanFieldProps>)[key] = {
-        checked: values[key] as boolean,
-        onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-          setValues((prev) => ({ ...prev, [key]: e.target.checked }));
-        },
-        onBlur,
-        error: fieldError,
-        name: key,
-        disabled: isSubmitting,
-      };
-    } else {
-      (fields as Record<string, StringFieldProps>)[key] = {
-        value: (values[key] as string) ?? '',
-        onChange: (
-          e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> | string,
-        ) => {
-          const newValue = typeof e === 'string' ? e : e.target.value;
-          setValues((prev) => ({ ...prev, [key]: newValue }));
-        },
-        onBlur,
-        error: fieldError,
-        name: key,
-        disabled: isSubmitting,
-      };
-    }
   }
 
   const meta: FormMeta = { isSubmitting, formError, reset };

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import SelectField from '../SelectField';
 
@@ -54,5 +54,16 @@ describe('SelectField', () => {
       </SelectField>,
     );
     expect(screen.getByLabelText('Role')).toHaveAttribute('name', 'role');
+  });
+
+  it('calls onValueChange with the selected value', () => {
+    const handleValueChange = jest.fn();
+    render(
+      <SelectField label="Role" onValueChange={handleValueChange}>
+        {options}
+      </SelectField>,
+    );
+    fireEvent.change(screen.getByLabelText('Role'), { target: { value: 'b' } });
+    expect(handleValueChange).toHaveBeenCalledWith('b');
   });
 });

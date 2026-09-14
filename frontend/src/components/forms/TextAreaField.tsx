@@ -8,6 +8,7 @@ import { formTextAreaClasses } from './fieldStyles';
 type TextAreaFieldProps = Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'id'> & {
   label: string;
   error?: string | null;
+  onValueChange?: (value: string) => void;
 };
 
 export default function TextAreaField({
@@ -15,6 +16,7 @@ export default function TextAreaField({
   error,
   className,
   rows = 4,
+  onValueChange,
   ...textareaProps
 }: TextAreaFieldProps) {
   const controlId = useId();
@@ -26,6 +28,10 @@ export default function TextAreaField({
         {...textareaProps}
         id={controlId}
         rows={rows}
+        onChange={(e) => {
+          onValueChange?.(e.target.value);
+          textareaProps.onChange?.(e);
+        }}
         aria-invalid={error ? true : undefined}
         aria-describedby={errorId}
         className={formTextAreaClasses(Boolean(error), className)}
