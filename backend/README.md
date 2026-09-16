@@ -4,7 +4,7 @@ Express 5 + Drizzle (PostgreSQL) + Jest. Serves the API on port **4000**.
 
 ## Install
 
-Node Version v26, it is suggested you use nvm when working with this library
+Node v26 (pinned in `.nvmrc`; use nvm).
 
 ```console
 npm install
@@ -32,9 +32,13 @@ npm test -- test/test-foo.spec.ts
 
 ## Database
 
+Generate a migration from the models listed in `src/database/schema.ts`:
+
 ```console
 npm run db:generate
 ```
+
+Apply `migrations/` to the database in `.env`:
 
 ```console
 npm run db:migrate

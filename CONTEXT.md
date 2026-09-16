@@ -15,6 +15,11 @@ Two independent apps, no root `package.json`:
 
 One worked vertical slice — the `foo` entity — is wired end to end from Postgres through Express to a React table. Every new feature copies it.
 
+Also present, outside the slice pattern:
+
+- `GET /health-check` in `backend/src/app.ts`, backed by `dal/heartbeat.ts` (a `SELECT 1`). Always 200; `connection_status` is `INACTIVE` when the pool cannot reach Postgres. `frontend/src/server-actions/health-check.ts` reads it and `HelloWorldDashboard.tsx` renders the status dot.
+- `.claude/launch.json` defines two Browser-pane preview configs: `fullstack` (runs `dev.sh` with `PORT` unset so the backend keeps 4000) and `frontend` (Next only).
+
 ## How to add a feature
 
 Follow this order. Each step lists the file to create and what goes in it. Steps 1, 2, 5, 7–11 are boilerplate copied from `foo`: stamp them all at once with `node .claude/skills/new-entity/scaffold.mjs <kebab-name>` (see `.claude/skills/new-entity/SKILL.md`), then edit the model before step 3.
@@ -39,11 +44,12 @@ Follow this order. Each step lists the file to create and what goes in it. Steps
    - runs the whole write inside `db.transaction()` via a `withTransaction(fn)` wrapper exported from the DAL, so the DAL stays the only importer of `db`;
    - passes the transaction handle into DAL functions (give them an `executor` parameter that defaults to `db`);
    - locks rows it will update with `SELECT ... FOR UPDATE`, in a fixed order (by id) so concurrent calls cannot deadlock;
-   - throws a typed error (`class <Entity>Error extends Error { code: '...' }`) for business failures. The route maps codes to status (`NOT_FOUND` → 404, everything else → 400) and passes anything else to `next(err)`.
+   - throws a typed domain error (`class <Entity>Error extends Error { code: '...' }`) for business failures. The service never knows about HTTP. The route catches the domain error and maps its `code` to an entry in the route's `ERRORS` table (step 7) — `NOT_FOUND` → 404, everything else → 400 — and passes anything it does not recognise to `next(err)`.
    Pure calculation helpers (no DB) go in their own module under `services/` so they can be tested without fixtures.
 
 7. **Route** — `backend/src/api/<entity>.ts`
    Copy `api/foo.ts`. Body type fields are `any`, validated at runtime (not compile time — this is a CLAUDE.md rule). Route catches errors with `next(err)`.
+   Declare the route's errors once in an `ERRORS` table at the top of the file. Every non-2xx body is `{ code, message }`: `code` is `SCREAMING_SNAKE` prefixed with the entity (`FOO_NAME_INVALID`), `message` is a fixed lowercase string with no request values in it. Send with `return res.status(400).json(ERRORS.NAME_INVALID)` — no throwing, no helper. Errors shared by more than one router go in `backend/src/api/errors.ts` (create it on first use). Tests assert the whole body with `toEqual`. Full rules and message guidelines: `CLAUDE.md` → Backend → API errors.
 
 8. **Mount** — `backend/src/api/router.ts`
    Add `router.use('/<entity>', <entity>)`.
@@ -74,7 +80,7 @@ Seed data belongs in a custom migration (`cd backend && npx drizzle-kit generate
 
 All field components take a `label` prop and an optional `error` prop. When `error` is set, the field shows a danger border and an inline validation message with `aria-live="polite"`.
 
-`Form` wraps the field components with a render-prop API: pass `initialValues`, `validationRules`, and an `onSubmit` callback. It validates on blur and on submit, disables fields during submission, auto-resets on success, and displays a form-level error when `onSubmit` returns a string. Boolean initial values produce `checked`/`onChange` props (for CheckboxField); string values produce `value`/`onChange` that handle both event-based and raw-value onChange (for ListboxField).
+`Form` wraps the field components with a render-prop API: pass `initialValues`, `validationRules`, and an `onSubmit` callback. It validates on blur and on submit, disables fields during submission, auto-resets on success, and displays a form-level error when `onSubmit` returns a string. The render prop receives `(fields, meta)`. Every key in `initialValues` becomes one `fields.<key>` object with the same shape regardless of value type: `{ value, onValueChange, onBlur, error, name, disabled }`. Spread it straight onto a field component — `<TextField label="Name" {...fields.name} />`, `<CheckboxField label="Agree" {...fields.agree} />`. Every field component accepts `onValueChange` (typed `string` or `boolean` as appropriate) alongside the native `onChange`; `CheckboxField` reads `checked ?? value`, so a boolean `value` works. `meta` is `{ isSubmitting, formError, reset }`.
 
 `FieldWrapper` provides the shared label-above-control layout. `FieldError` renders the inline message. `fieldStyles.ts` exports class builders (`formInputClasses`, `formTextAreaClasses`, `formSelectClasses`, `formCheckboxClasses`) that handle valid/invalid styling.
 
@@ -118,7 +124,7 @@ Jest + `@swc/jest` + Testing Library. Tests live colocated in `__tests__/` direc
 - **Typecheck while iterating with `npm run typecheck:fast`** (`tsc --noEmit` only). The full `npm run typecheck` runs `next typegen` first, which costs ~10s and is only needed when a route file was added or removed — run it once as the final gate.
 
 - **Form kit specs.** `frontend/src/components/forms/__tests__/` covers all five field components — rendering, error states, aria attributes, and prop forwarding.
-- **`testMatch` covers `.test.ts` and `.test.tsx`.** Non-JSX modules (for example under `src/lib/`) get a plain `.test.ts` spec in a colocated `__tests__/` directory.
+- **`testMatch` covers `.test.ts` and `.test.tsx`.** Non-JSX modules get a plain `.test.ts` spec in a colocated `__tests__/` directory.
 - **Headless UI.** `jest.setup.ts` polyfills `ResizeObserver` for jsdom. Headless UI's `ListboxButton` overrides `aria-describedby`, so ListboxField tests find the error element by `role="status"` instead of by ID.
 
 ```bash
@@ -130,8 +136,9 @@ cd frontend && npm test
 - **Real Postgres, no mocks.** Testcontainers starts a `postgres:16-alpine` per spec file, runs migrations, injects `DATABASE_*` env vars.
 - **Flat directory.** Specs go directly in `backend/test/`. A spec in a subdirectory silently does not run, and a helper file in `backend/test/` is run as a spec and fails. Shared fixtures go inline in the spec, or in a new `backend/test-helpers/` directory outside `testMatch`.
 - **Every spec gets migrations, including seeds.** A pure-logic spec still boots a container; that is fine, just expect ~2s of startup per file.
-- **Supertest against the app.** Reference: `backend/test/test-foo-create.spec.ts`.
+- **Supertest against the app.** Reference: `backend/test/test-foo-create.spec.ts`. The three current specs are `test-foo.spec.ts` (list), `test-foo-create.spec.ts` (create + validation, uses `it.each`), and `test-healthcheck.spec.ts`.
 - **Pool teardown is global.** `after-env-setup.ts` handles it in `afterAll`.
+- **Migrations are the source of truth.** `npm run db:push` exists (`drizzle-kit push`, writes the schema straight to the database with no migration file) for throwaway local experiments only. Tests and `dev.sh` apply `backend/migrations/`; a table that only exists via `db:push` is absent in every spec.
 
 ```bash
 cd backend && npm test

@@ -1,39 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# frontend
 
-## Getting Started
+Next.js (App Router) + Tailwind 4 + Headless UI + Jest. Serves the UI on port **3000**.
 
-First, run the development server:
+The browser never calls the backend directly: every request goes through a server
+action in `src/server-actions/`, which reads `BACKEND_URL` server-side. The form
+kit (`src/components/forms/`) and design tokens (`src/styles/globals.css`) are
+documented in the root `CONTEXT.md`.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Install
+
+Node v26 (pinned in `.nvmrc`; use nvm).
+
+```console
+npm install && cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`.env.local` holds `BACKEND_URL`, already pointing at `http://localhost:4000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Dev server
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```console
+npm run dev
+```
 
-## Learn More
+Open http://localhost:3000. Edit `src/app/page.tsx` to change the page.
 
-To learn more about Next.js, take a look at the following resources:
+## Build and serve
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```console
+npm run build
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```console
+npm start
+```
 
-## Deploy on Vercel
+## Tests
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Jest + `@swc/jest` + Testing Library, jsdom. Specs live in `__tests__/` directories
+next to the code they test and match `*.test.ts` / `*.test.tsx`. `jest.setup.ts`
+polyfills `ResizeObserver` for Headless UI.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```console
+npm test
+```
+
+```console
+npm test -- src/components/forms
+```
+
+## Typecheck
+
+Fast, while iterating (`tsc --noEmit` only):
+
+```console
+npm run typecheck:fast
+```
+
+Full, as the final gate — runs `next typegen` first, which costs ~10s and is only
+needed when a route file was added or removed:
+
+```console
+npm run typecheck
+```
+
+## Lint
+
+```console
+npm run lint
+```
 
 ## Formatting
 

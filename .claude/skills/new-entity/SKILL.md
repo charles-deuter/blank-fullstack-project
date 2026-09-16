@@ -16,7 +16,7 @@ Stamps the eight files of a vertical slice plus the two registration lines (`sch
    node .claude/skills/new-entity/scaffold.mjs <entity>
    ```
 
-   `wallet-balance` gives table `wallet_balance`, identifiers `walletBalance` / `WalletBalance` / `WALLET_BALANCE`, route `/api/wallet-balance`, files `wallet-balance.ts` and `WalletBalancePanel.tsx`. The script refuses to overwrite an existing file.
+   `wallet-balance` gives table `wallet_balance`, identifiers `walletBalance` / `WalletBalance` / `WALLET_BALANCE`, route `/api/wallet-balance`, files `wallet-balance.ts` and `WalletBalancePanel.tsx`. The script refuses to overwrite an existing file, rejects `foo` as the name, and runs `npx prettier --write` on every file it touches.
 
 2. Edit the model's columns to the real entity **before** generating the migration, so the slice produces one migration, not a foo-shaped one plus a fix-up.
 

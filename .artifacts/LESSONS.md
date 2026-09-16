@@ -60,3 +60,17 @@ say. Same root cause as the entry above, one turn later.
 never layers: `hasError ? INVALID : VALID`, with each property named in exactly one
 branch. If two classes could set the same property on one element, the cascade —
 not the code — decides, and it will not decide the way the code reads.
+
+---
+
+## 2026-09-15 — Changed a documented API without touching the doc
+
+**What went wrong:** `a31e781 feat:simplify form` replaced the `Form` render-prop
+shape (`checked`/`onChange` for booleans, `value`/`onChange` for strings) with one
+uniform `{ value, onValueChange, ... }` object. CONTEXT.md still described the old
+split. Two later doc-only commits edited CONTEXT.md and neither caught it, because
+neither was looking at the form kit.
+
+**Rule that would have caught it:** A commit that changes a prop, return shape, or
+script that CONTEXT.md names edits CONTEXT.md in the same commit. Before committing,
+grep CONTEXT.md for the identifiers in the diff.

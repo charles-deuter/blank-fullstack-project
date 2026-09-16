@@ -8,8 +8,9 @@ Two independent apps in one repo:
 | `frontend/` | Next.js (App Router) + Tailwind         | `3000`   |
 
 Each folder has its own `package.json` and lockfile — there is no root package.
-Node version is pinned per app in `backend/.nvmrc` and `frontend/.nvmrc` (`v26.8.1`);
-run `nvm use` in each folder. Both `package.json`s declare `engines.node >= 26.0.0`.
+Node version is pinned to `v26.8.1` in the root `.nvmrc` and again per app in
+`backend/.nvmrc` and `frontend/.nvmrc`; `nvm use` works from any of the three.
+Both `package.json`s declare `engines.node >= 26.0.0`.
 
 ## Setup
 
@@ -45,20 +46,20 @@ docker run --rm --name local-postgres -e POSTGRES_USER=local -e POSTGRES_PASSWOR
 ```
 
 ```console
-cd backend && npm start
+cd backend && npm run db:migrate
 ```
 
 ```console
-cd backend && npm run db:migrate
+cd backend && npm start
 ```
 
 ```console
 cd frontend && npm run dev
 ```
 
-Then open http://localhost:3000 — the page renders `hello-world` followed by a
-status dot. The dot is the bitwise AND of the backend's `server_status` and
-`connection_status` from `/health-check`: green only when both are `ACTIVE`, red
+Then open http://localhost:3000 — the page renders `HelloWorld` followed by a
+status dot. The dot is green only when both `server_status` and
+`connection_status` from the backend's `/health-check` are `ACTIVE`, red
 otherwise. Hover it to see the full request and response. With `./dev.sh` running
 the dot is green; without a database it is red (`connection_status: INACTIVE`).
 
@@ -68,7 +69,9 @@ record newest-first. The browser never calls Express directly — it goes throug
 the Next server actions in `frontend/src/server-actions/`, so there is no CORS
 setup and `BACKEND_URL` stays server-side.
 
-## Per-app docs
+## Further docs
 
+- [`CONTEXT.md`](CONTEXT.md) — the map: layout, the `foo` reference slice, the recipe for adding a feature, form kit, design tokens, testing
+- [`CLAUDE.md`](CLAUDE.md) — conventions: code style, API error bodies, cross-package workflow
 - [`backend/README.md`](backend/README.md) — server, tests, migrations, formatting
-- [`frontend/README.md`](frontend/README.md) — Next.js defaults
+- [`frontend/README.md`](frontend/README.md) — dev server, tests, typecheck, formatting
