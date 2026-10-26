@@ -3,7 +3,8 @@
 // entity name substituted. Run from the repo root:
 //   node .claude/skills/new-entity/scaffold.mjs <kebab-case-singular>
 // The output is a starting point: every generated file still carries foo's
-// shape (one `name` column, one create button) for you to edit.
+// shape (five example columns, one create form using every form-kit field)
+// for you to edit.
 
 import { existsSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
@@ -34,6 +35,15 @@ const FILES = [
   ['frontend/src/server-actions/foo.ts', `frontend/src/server-actions/${kebab}.ts`],
   ['frontend/src/components/FooPanel.tsx', `frontend/src/components/${pascal}Panel.tsx`],
   ['frontend/src/components/FooTable.tsx', `frontend/src/components/${pascal}Table.tsx`],
+  ['frontend/src/components/FooForm.tsx', `frontend/src/components/${pascal}Form.tsx`],
+  [
+    'frontend/src/components/__tests__/FooTable.test.tsx',
+    `frontend/src/components/__tests__/${pascal}Table.test.tsx`,
+  ],
+  [
+    'frontend/src/components/__tests__/FooForm.test.tsx',
+    `frontend/src/components/__tests__/${pascal}Form.test.tsx`,
+  ],
 ];
 
 const clashes = FILES.map(([, to]) => to).filter((to) => existsSync(resolve(ROOT, to)));
@@ -53,7 +63,8 @@ function substitute(source) {
       // Things that are not identifiers keep their own casing.
       .replace(`pgTable('${camel}'`, `pgTable('${snake}'`)
       .replaceAll(`/api/${camel}`, `/api/${kebab}`)
-      .replace(new RegExp(`(from '[./@][^']*/)${camel}'`, 'g'), `$1${kebab}'`)
+      // Any quoted module path ending in the entity — imports and jest.mock() alike.
+      .replace(new RegExp(`(['"][./@][^'"]*/)${camel}(['"])`, 'g'), `$1${kebab}$2`)
   );
 }
 

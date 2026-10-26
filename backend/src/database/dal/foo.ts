@@ -1,9 +1,9 @@
 import { desc } from 'drizzle-orm';
 import { db } from '../db';
-import { foo } from '../models/foo';
+import { foo, FooInsertType } from '../models/foo';
 
-export async function create(name: string) {
-  const [created] = await db.insert(foo).values({ name }).returning();
+export async function create(data: FooInsertType) {
+  const [created] = await db.insert(foo).values(data).returning();
 
   return created;
 }

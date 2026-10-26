@@ -2,9 +2,20 @@
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:4000';
 
-export type Foo = {
-  id: number;
+export type FooCategory = 'general' | 'internal' | 'external';
+
+export type FooPriority = 'low' | 'medium' | 'high';
+
+export type CreateFooInput = {
   name: string;
+  description: string | null;
+  category: FooCategory;
+  priority: FooPriority;
+  is_active: boolean;
+};
+
+export type Foo = CreateFooInput & {
+  id: number;
   created_at: string;
 };
 
@@ -30,12 +41,12 @@ export async function listFoos(): Promise<ListFoosResult> {
   }
 }
 
-export async function createFoo(name: string): Promise<CreateFooResult> {
+export async function createFoo(input: CreateFooInput): Promise<CreateFooResult> {
   try {
     const res = await fetch(`${BACKEND_URL}/api/foo`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify(input),
       cache: 'no-store',
     });
 

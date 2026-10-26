@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ListboxField from '../ListboxField';
 import type { ListboxFieldOption } from '../ListboxField';
@@ -66,5 +66,23 @@ describe('ListboxField', () => {
     fireEvent.click(screen.getByLabelText('Color'));
     fireEvent.click(screen.getByText('Blue'));
     expect(handleChange).toHaveBeenCalledWith('blue');
+  });
+
+  it('calls onBlur when the button loses focus', () => {
+    const handleBlur = jest.fn();
+    render(<ListboxField label="Color" options={options} onBlur={handleBlur} />);
+    fireEvent.blur(screen.getByLabelText('Color'));
+    expect(handleBlur).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call onBlur when focus moves into its own options', () => {
+    const handleBlur = jest.fn();
+    render(<ListboxField label="Color" options={options} onBlur={handleBlur} />);
+    const button = screen.getByLabelText('Color');
+    act(() => button.focus());
+    fireEvent.click(button);
+    // Opening really does pull focus off the button, so the guard is what keeps this quiet.
+    expect(screen.getByRole('listbox')).toHaveFocus();
+    expect(handleBlur).not.toHaveBeenCalled();
   });
 });

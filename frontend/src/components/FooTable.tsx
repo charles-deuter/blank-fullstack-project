@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import { createFoo, listFoos, type Foo } from '@/server-actions/foo';
-
-const FOO_NAME = 'hello-world';
+import { useState } from 'react';
+import { createFoo, listFoos, type CreateFooInput, type Foo } from '@/server-actions/foo';
+import FooForm from './FooForm';
 
 // Locale and timezone are pinned so the server and the client format identically;
 // letting either default would render different text and trip a hydration mismatch.
@@ -30,42 +29,34 @@ export default function FooTable({ initialFoos, initialError }: FooTableProps) {
   const [status, setStatus] = useState<Status | null>(
     initialError ? { ok: false, message: initialError } : null,
   );
-  const [isPending, startTransition] = useTransition();
 
-  function handleCreate() {
-    startTransition(async () => {
-      const created = await createFoo(FOO_NAME);
+  async function handleCreate(values: CreateFooInput): Promise<string | null> {
+    const created = await createFoo(values);
 
-      if (!created.ok) {
-        setStatus({ ok: false, message: created.message });
-        return;
-      }
+    if (!created.ok) {
+      // The form shows the failure; drop any earlier success so the two don't disagree.
+      setStatus(null);
+      return created.message;
+    }
 
-      // Re-read rather than prepending locally, so the server's ordering stays
-      // the single source of truth for what the table shows.
-      const listed = await listFoos();
+    // Re-read rather than prepending locally, so the server's ordering stays
+    // the single source of truth for what the table shows.
+    const listed = await listFoos();
 
-      if (!listed.ok) {
-        setStatus({ ok: false, message: listed.message });
-        return;
-      }
+    if (!listed.ok) {
+      setStatus({ ok: false, message: listed.message });
+      return null;
+    }
 
-      setFoos(listed.foos);
-      setStatus({ ok: true, message: `Created foo #${created.foo.id}` });
-    });
+    setFoos(listed.foos);
+    setStatus({ ok: true, message: `Created foo #${created.foo.id}` });
+    return null;
   }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 rounded-lg border border-edge bg-surface p-4 shadow-sm">
-        <button
-          type="button"
-          onClick={handleCreate}
-          disabled={isPending}
-          className="self-start rounded bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
-        >
-          {isPending ? 'Creating…' : 'Create foo'}
-        </button>
+        <FooForm onSubmit={handleCreate} />
 
         <div role="status" aria-live="polite" className="min-h-9">
           {status && (
@@ -86,13 +77,17 @@ export default function FooTable({ initialFoos, initialError }: FooTableProps) {
             <tr className="border-b border-edge text-muted">
               <th className="py-2 pr-4 font-medium">id</th>
               <th className="py-2 pr-4 font-medium">name</th>
+              <th className="py-2 pr-4 font-medium">description</th>
+              <th className="py-2 pr-4 font-medium">category</th>
+              <th className="py-2 pr-4 font-medium">priority</th>
+              <th className="py-2 pr-4 font-medium">active</th>
               <th className="py-2 font-medium">created_at (UTC)</th>
             </tr>
           </thead>
           <tbody>
             {foos.length === 0 ? (
               <tr>
-                <td colSpan={3} className="py-4 text-muted">
+                <td colSpan={7} className="py-4 text-muted">
                   No foo records yet
                 </td>
               </tr>
@@ -101,6 +96,12 @@ export default function FooTable({ initialFoos, initialError }: FooTableProps) {
                 <tr key={foo.id} className="border-b border-edge">
                   <td className="py-2 pr-4">{foo.id}</td>
                   <td className="py-2 pr-4">{foo.name}</td>
+                  <td className="py-2 pr-4">
+                    {foo.description ?? <span className="text-muted">—</span>}
+                  </td>
+                  <td className="py-2 pr-4">{foo.category}</td>
+                  <td className="py-2 pr-4">{foo.priority}</td>
+                  <td className="py-2 pr-4">{foo.is_active ? 'yes' : 'no'}</td>
                   <td className="py-2">
                     {createdAtFormat.format(new Date(foo.created_at))}
                   </td>

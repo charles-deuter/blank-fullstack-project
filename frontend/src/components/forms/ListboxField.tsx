@@ -1,6 +1,6 @@
 'use client';
 
-import { useId } from 'react';
+import { type FocusEvent, useId } from 'react';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react';
 import FieldWrapper from './FieldWrapper';
 import { formSelectClasses } from './fieldStyles';
@@ -17,6 +17,7 @@ type ListboxFieldProps = {
   value?: string;
   onChange?: (value: string) => void;
   onValueChange?: (value: string) => void;
+  onBlur?: () => void;
   placeholder?: string;
   disabled?: boolean;
   name?: string;
@@ -42,6 +43,7 @@ export default function ListboxField({
   value,
   onChange,
   onValueChange,
+  onBlur,
   placeholder = 'Select an option',
   disabled = false,
   name,
@@ -52,6 +54,17 @@ export default function ListboxField({
   const errorId = `${controlId}-error`;
 
   const selectedOption = options.find((o) => o.value === value);
+
+  // Opening the listbox moves focus from the button into its own options. That is
+  // not the user leaving the field, so only report a blur when focus goes elsewhere;
+  // otherwise Form would flag the field as empty the moment it is opened.
+  function handleButtonBlur(e: FocusEvent<HTMLButtonElement>) {
+    const nextFocus = e.relatedTarget;
+    const focusStaysInListbox =
+      nextFocus instanceof Node &&
+      Boolean(e.currentTarget.parentElement?.contains(nextFocus));
+    if (!focusStaysInListbox) onBlur?.();
+  }
 
   return (
     <FieldWrapper controlId={controlId} errorId={errorId} label={label} error={error}>
@@ -67,6 +80,7 @@ export default function ListboxField({
             id={controlId}
             aria-invalid={error ? true : undefined}
             aria-describedby={errorId}
+            onBlur={handleButtonBlur}
             className={formSelectClasses(
               Boolean(error),
               `text-left ${!selectedOption ? 'text-muted' : ''} ${className ?? ''}`,

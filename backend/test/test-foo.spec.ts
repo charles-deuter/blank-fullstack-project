@@ -10,9 +10,33 @@ const MIDDLE = new Date('2026-02-01T00:00:00.000Z');
 const NEWEST = new Date('2026-03-01T00:00:00.000Z');
 
 const fooFixture: FooInsertType[] = [
-  { id: 1, name: 'bar', created_at: MIDDLE },
-  { id: 2, name: 'baz', created_at: OLDEST },
-  { id: 3, name: 'qux', created_at: NEWEST },
+  {
+    id: 1,
+    name: 'bar',
+    description: 'first row',
+    category: 'general',
+    priority: 'low',
+    is_active: true,
+    created_at: MIDDLE,
+  },
+  {
+    id: 2,
+    name: 'baz',
+    description: null,
+    category: 'internal',
+    priority: 'medium',
+    is_active: false,
+    created_at: OLDEST,
+  },
+  {
+    id: 3,
+    name: 'qux',
+    description: 'third row',
+    category: 'external',
+    priority: 'high',
+    is_active: true,
+    created_at: NEWEST,
+  },
 ];
 
 describe('GET /api/foo', () => {
@@ -26,11 +50,9 @@ describe('GET /api/foo', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toHaveLength(fooFixture.length);
     expect(response.body).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: 1, name: 'bar' }),
-        expect.objectContaining({ id: 2, name: 'baz' }),
-        expect.objectContaining({ id: 3, name: 'qux' }),
-      ]),
+      expect.arrayContaining(
+        fooFixture.map((row) => ({ ...row, created_at: row.created_at!.toISOString() })),
+      ),
     );
   });
 

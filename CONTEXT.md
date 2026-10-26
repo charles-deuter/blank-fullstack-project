@@ -13,7 +13,7 @@ Two independent apps, no root `package.json`:
 
 `./dev.sh` starts a throwaway `postgres:16-alpine` container, applies migrations, and runs both apps. The container is `--rm` so the database is empty every run.
 
-One worked vertical slice — the `foo` entity — is wired end to end from Postgres through Express to a React table. Every new feature copies it.
+One worked vertical slice — the `foo` entity — is wired end to end from Postgres through Express to a React table. Every new feature copies it. Its five columns (`name`, `description`, `category`, `priority`, `is_active`) exist to exercise every form-kit field in `FooForm.tsx`; a real entity keeps only what it needs.
 
 Also present, outside the slice pattern:
 
@@ -60,8 +60,9 @@ Follow this order. Each step lists the file to create and what goes in it. Steps
 10. **Server component** — `frontend/src/components/<Entity>Panel.tsx`
     Copy `FooPanel.tsx`. Calls the server action and passes the result as props to the client component.
 
-11. **Client component** — `frontend/src/components/<Entity>Table.tsx` (or whatever UI)
-    `'use client'`. Receives data as props from the server component. Uses the form kit (below) for any inputs. After a mutation, re-fetch through the server action rather than patching local state, so the server stays the source of truth for ordering (see `FooTable.tsx`).
+11. **Client components** — `frontend/src/components/<Entity>Table.tsx` and `<Entity>Form.tsx` (or whatever UI)
+    `'use client'`. The Table receives data as props from the server component, owns the list and status state, and calls the server actions. After a mutation, re-fetch through the server action rather than patching local state, so the server stays the source of truth for ordering (see `FooTable.tsx`).
+    The Form is props only: one `onSubmit(values) => Promise<string | null>` that returns the failure message or `null`. It builds the inputs from the form kit (below), and its `validationRules` messages match the backend's `ERRORS` messages byte for byte. Option lists live in the Form, not the server action file (every export there is a public endpoint).
 
 Seed data belongs in a custom migration (`cd backend && npx drizzle-kit generate --custom --name=seed-<entity>`, then write the SQL by hand). Migrations run in every test container too, so seeded rows are present in every backend spec — reset them in `beforeEach` when a spec mutates them.
 
@@ -78,7 +79,7 @@ Seed data belongs in a custom migration (`cd backend && npx drizzle-kit generate
 | `CheckboxField`  | `<input type="checkbox">`                         |
 | `Form`           | `<form>` — state, validation, submission lifecycle |
 
-All field components take a `label` prop and an optional `error` prop. When `error` is set, the field shows a danger border and an inline validation message with `aria-live="polite"`.
+All field components take a `label` prop and an optional `error` prop, and all accept `onBlur` (`ListboxField` forwards it to the `ListboxButton`), so `Form`'s blur validation works on every field. When `error` is set, the field shows a danger border and an inline validation message with `aria-live="polite"`.
 
 `Form` wraps the field components with a render-prop API: pass `initialValues`, `validationRules`, and an `onSubmit` callback. It validates on blur and on submit, disables fields during submission, auto-resets on success, and displays a form-level error when `onSubmit` returns a string. The render prop receives `(fields, meta)`. Every key in `initialValues` becomes one `fields.<key>` object with the same shape regardless of value type: `{ value, onValueChange, onBlur, error, name, disabled }`. Spread it straight onto a field component — `<TextField label="Name" {...fields.name} />`, `<CheckboxField label="Agree" {...fields.agree} />`. Every field component accepts `onValueChange` (typed `string` or `boolean` as appropriate) alongside the native `onChange`; `CheckboxField` reads `checked ?? value`, so a boolean `value` works. `meta` is `{ isSubmitting, formError, reset }`.
 
@@ -124,6 +125,7 @@ Jest + `@swc/jest` + Testing Library. Tests live colocated in `__tests__/` direc
 - **Typecheck while iterating with `npm run typecheck:fast`** (`tsc --noEmit` only). The full `npm run typecheck` runs `next typegen` first, which costs ~10s and is only needed when a route file was added or removed — run it once as the final gate.
 
 - **Form kit specs.** `frontend/src/components/forms/__tests__/` covers all five field components — rendering, error states, aria attributes, and prop forwarding.
+- **Component specs.** `src/components/__tests__/FooForm.test.tsx` drives the form with a `jest.fn` `onSubmit` (validation, disabled-while-pending, reset). `FooTable.test.tsx` stubs the server actions with `jest.mock('@/server-actions/foo')`; nothing calls the backend from Jest.
 - **`testMatch` covers `.test.ts` and `.test.tsx`.** Non-JSX modules get a plain `.test.ts` spec in a colocated `__tests__/` directory.
 - **Headless UI.** `jest.setup.ts` polyfills `ResizeObserver` for jsdom. Headless UI's `ListboxButton` overrides `aria-describedby`, so ListboxField tests find the error element by `role="status"` instead of by ID.
 
